@@ -1,0 +1,214 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  username       String    @unique
+  passwordHash   String    @map("password_hash")
+  businessName   String    @default("Alkaa Business +") @map("business_name")
+  tagline        String    @default("Course Admissions & Smart Accounting")
+  phone          String    @default("")
+  email          String    @default("")
+  address        String    @default("")
+  currency       String    @default("₹")
+  gstin          String    @default("")
+  invoicePrefix  String    @default("ADM") @map("invoice_prefix")
+  apiKey         String?   @map("api_key")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model Account {
+  id             Int             @id @default(autoincrement())
+  name           String
+  type           String          // 'cash', 'bank', 'upi'
+  balance        Decimal         @default(0) @db.Decimal(15, 2)
+  accountNumber  String          @default("") @map("account_number")
+  bankName       String          @default("") @map("bank_name")
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  invoices       Invoice[]
+  studentFees    StudentFee[]
+  salaryPayments SalaryPayment[]
+  transactions   Transaction[]
+  staffIncentives StaffIncentive[]
+
+  @@map("accounts")
+}
+
+model Person {
+  id               Int          @id @default(autoincrement())
+  type             String       // 'student', 'customer', 'client'
+  name             String
+  phone            String       @default("")
+  email            String       @default("")
+  courseOrDetails  String       @default("") @map("course_or_details")
+  totalFee         Decimal      @default(0) @map("total_fee") @db.Decimal(15, 2)
+  counselorStaffId Int?         @map("counselor_staff_id")
+  counselorName    String       @default("") @map("counselor_name")
+  notes            String       @default("")
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  invoices         Invoice[]
+  studentFees      StudentFee[]
+
+  @@map("people")
+}
+
+model Invoice {
+  id               Int           @id @default(autoincrement())
+  invoiceNumber    String        @unique @map("invoice_number")
+  personId         Int?          @map("person_id")
+  customerName     String        @map("customer_name")
+  customerPhone    String        @default("") @map("customer_phone")
+  subtotal         Decimal       @db.Decimal(15, 2)
+  discount         Decimal       @default(0) @db.Decimal(15, 2)
+  tax              Decimal       @default(0) @db.Decimal(15, 2)
+  netAmount        Decimal       @map("net_amount") @db.Decimal(15, 2)
+  paymentMode      String        @map("payment_mode") // 'cash', 'bank', 'upi', 'unpaid'
+  accountId        Int?          @map("account_id")
+  amountPaid       Decimal       @default(0) @map("amount_paid") @db.Decimal(15, 2)
+  dueAmount        Decimal       @default(0) @map("due_amount") @db.Decimal(15, 2)
+  counselorStaffId Int?          @map("counselor_staff_id")
+  counselorName    String        @default("") @map("counselor_name")
+  incentiveAmount  Decimal       @default(0) @map("incentive_amount") @db.Decimal(15, 2)
+  incentiveRule    String        @default("") @map("incentive_rule")
+  incentiveStatus  String        @default("none") @map("incentive_status")
+  notes            String        @default("")
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  person           Person?       @relation(fields: [personId], references: [id], onDelete: SetNull)
+  account          Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  items            InvoiceItem[]
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id         Int      @id @default(autoincrement())
+  invoiceId  Int      @map("invoice_id")
+  itemName   String   @map("item_name")
+  quantity   Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice  Decimal  @map("unit_price") @db.Decimal(15, 2)
+  totalPrice Decimal  @map("total_price") @db.Decimal(15, 2)
+
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+model Staff {
+  id             Int              @id @default(autoincrement())
+  name           String
+  role           String           @default("Course Counselor")
+  phone          String           @default("")
+  monthlySalary  Decimal          @default(0) @map("monthly_salary") @db.Decimal(15, 2)
+  status         String           @default("active")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  incentives     StaffIncentive[]
+  salaryPayments SalaryPayment[]
+
+  @@map("staff")
+}
+
+model StaffIncentive {
+  id              Int       @id @default(autoincrement())
+  staffId         Int       @map("staff_id")
+  staffName       String    @map("staff_name")
+  studentName     String    @map("student_name")
+  courseName      String    @default("") @map("course_name")
+  admissionAmount Decimal   @default(0) @map("admission_amount") @db.Decimal(15, 2)
+  incentiveRule   String    @default("") @map("incentive_rule")
+  amount          Decimal   @db.Decimal(15, 2)
+  status          String    @default("due") // 'due' or 'paid'
+  accountId       Int?      @map("account_id")
+  paymentMode     String    @default("cash") @map("payment_mode")
+  paidDate        String?   @map("paid_date")
+  notes           String    @default("")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  staff           Staff     @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  account         Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@map("staff_incentives")
+}
+
+model SalaryPayment {
+  id          Int       @id @default(autoincrement())
+  staffId     Int       @map("staff_id")
+  staffName   String    @map("staff_name")
+  monthYear   String    @map("month_year")
+  amount      Decimal   @db.Decimal(15, 2)
+  paymentMode String    @map("payment_mode")
+  accountId   Int?      @map("account_id")
+  paymentDate String    @map("payment_date")
+  notes       String    @default("")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  staff       Staff     @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  account     Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@map("salary_payments")
+}
+
+model StudentFee {
+  id            Int       @id @default(autoincrement())
+  studentId     Int       @map("student_id")
+  studentName   String    @map("student_name")
+  amount        Decimal   @db.Decimal(15, 2)
+  paymentMode   String    @map("payment_mode")
+  accountId     Int?      @map("account_id")
+  receiptNumber String    @unique @map("receipt_number")
+  paymentDate   String    @map("payment_date")
+  notes         String    @default("")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  student       Person    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  account       Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@map("student_fees")
+}
+
+model Transaction {
+  id            Int       @id @default(autoincrement())
+  date          String
+  type          String    // 'income', 'expense'
+  category      String
+  amount        Decimal   @db.Decimal(15, 2)
+  accountId     Int?      @map("account_id")
+  paymentMode   String    @map("payment_mode")
+  referenceType String?   @map("reference_type")
+  referenceId   String?   @map("reference_id")
+  partyName     String    @default("") @map("party_name")
+  description   String    @default("")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  account       Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@map("transactions")
+}
+
+model SftpFile {
+  id           Int       @id @default(autoincrement())
+  filename     String
+  relPath      String    @map("rel_path")
+  fileSize     Int       @default(0) @map("file_size")
+  fileType     String?   @map("file_type")
+  rowCount     Int       @default(0) @map("row_count")
+  sheetNames   String    @default("") @map("sheet_names")
+  status       String    @default("stored")
+  uploadedBy   String    @default("sftp_adapter") @map("uploaded_by")
+  lastModified DateTime? @map("last_modified")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@map("sftp_files")
+}
+
