@@ -21,7 +21,9 @@ export default function InvoicesList({
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'due' | 'paid'
 
-  const dueInvoices = invoices.filter(inv => {
+  const safeInvoices = Array.isArray(invoices) ? invoices : [];
+
+  const dueInvoices = safeInvoices.filter(inv => {
     const totalFee = Number(inv.net_amount || 0);
     const paidNow = inv.amount_paid !== undefined && inv.amount_paid !== null 
       ? Number(inv.amount_paid) 
@@ -32,7 +34,7 @@ export default function InvoicesList({
     return dueNow > 0 || inv.payment_mode === 'unpaid';
   });
 
-  const paidInvoices = invoices.filter(inv => {
+  const paidInvoices = safeInvoices.filter(inv => {
     const totalFee = Number(inv.net_amount || 0);
     const paidNow = inv.amount_paid !== undefined && inv.amount_paid !== null 
       ? Number(inv.amount_paid) 
@@ -45,14 +47,14 @@ export default function InvoicesList({
 
   const baseList = filterMode === 'due' 
     ? dueInvoices 
-    : (filterMode === 'paid' ? paidInvoices : invoices);
+    : (filterMode === 'paid' ? paidInvoices : safeInvoices);
 
   const filtered = baseList.filter(inv => {
-    const q = search.toLowerCase();
+    const q = (search || '').toLowerCase();
     return (
-      inv.invoice_number.toLowerCase().includes(q) ||
-      inv.customer_name.toLowerCase().includes(q) ||
-      (inv.customer_phone && inv.customer_phone.includes(q))
+      (inv.invoice_number || '').toLowerCase().includes(q) ||
+      (inv.customer_name || '').toLowerCase().includes(q) ||
+      (inv.customer_phone ? String(inv.customer_phone).includes(q) : false)
     );
   });
 
@@ -97,7 +99,7 @@ export default function InvoicesList({
             <Receipt className="w-3.5 h-3.5" />
             <span>All Bills</span>
             <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${filterMode === 'all' ? 'bg-indigo-800 text-indigo-100' : 'bg-slate-800 text-slate-300'}`}>
-              {invoices.length}
+              {safeInvoices.length}
             </span>
           </button>
 

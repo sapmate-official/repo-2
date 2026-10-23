@@ -26,6 +26,10 @@ export default function StaffSalaries({
   accounts = [],
   currency = '₹'
 }) {
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
+  const safeStaff = Array.isArray(staff) ? staff : [];
+  const safeSalaries = Array.isArray(salaries) ? salaries : [];
+
   const [activeSubTab, setActiveSubTab] = useState('incentives'); // 'incentives' | 'staff' | 'history'
   const [incentivesData, setIncentivesData] = useState({ incentives: [], summary: { total_due: 0, total_paid: 0 } });
   const [loadingIncentives, setLoadingIncentives] = useState(false);
@@ -33,7 +37,7 @@ export default function StaffSalaries({
   // Pay Incentive Modal
   const [payingIncentive, setPayingIncentive] = useState(null);
   const [incentivePayMode, setIncentivePayMode] = useState('cash');
-  const [incentiveAccountId, setIncentiveAccountId] = useState(accounts[0]?.id || '');
+  const [incentiveAccountId, setIncentiveAccountId] = useState(safeAccounts[0]?.id || '');
   const [incentivePayDate, setIncentivePayDate] = useState(new Date().toISOString().split('T')[0]);
   const [disbursing, setDisbursing] = useState(false);
 
@@ -50,9 +54,14 @@ export default function StaffSalaries({
     setLoadingIncentives(true);
     try {
       const data = await api.getIncentives();
-      setIncentivesData(data);
+      if (data && Array.isArray(data.incentives)) {
+        setIncentivesData(data);
+      } else {
+        setIncentivesData({ incentives: [], summary: { total_due: 0, total_paid: 0 } });
+      }
     } catch (err) {
       console.error(err);
+      setIncentivesData({ incentives: [], summary: { total_due: 0, total_paid: 0 } });
     } finally {
       setLoadingIncentives(false);
     }
@@ -109,8 +118,8 @@ export default function StaffSalaries({
     }
   };
 
-  const totalMonthlyPayroll = staff.reduce((sum, s) => sum + (s.monthly_salary || 0), 0);
-  const totalSalariesDisbursed = salaries.reduce((sum, s) => sum + (s.amount || 0), 0);
+  const totalMonthlyPayroll = safeStaff.reduce((sum, s) => sum + Number(s?.monthly_salary || 0), 0);
+  const totalSalariesDisbursed = safeSalaries.reduce((sum, s) => sum + Number(s?.amount || 0), 0);
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
@@ -177,7 +186,7 @@ export default function StaffSalaries({
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>Staff Directory ({staff.length})</span>
+            <span>Staff Directory ({safeStaff.length})</span>
           </button>
 
           <button
@@ -459,8 +468,10 @@ export default function StaffSalaries({
                     onChange={(e) => setIncentiveAccountId(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-2.5 text-xs text-slate-100"
                   >
-                    {accounts.map(acc => (
-                      <option key={acc.id} value={acc.id}>{acc.name}</option>
+                    {safeAccounts.map(acc => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name} ({currency}{Number(acc.balance || 0).toLocaleString()})
+                      </option>
                     ))}
                   </select>
                 </div>

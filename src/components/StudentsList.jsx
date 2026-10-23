@@ -22,24 +22,26 @@ export default function StudentsList({
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState('due'); // 'due' | 'paid' | 'all'
 
-  const dueStudents = students.filter(st => Number(st.due_amount || 0) > 0);
-  const paidStudents = students.filter(st => Number(st.due_amount || 0) <= 0);
+  const safeStudents = Array.isArray(students) ? students : [];
+
+  const dueStudents = safeStudents.filter(st => Number(st?.due_amount || 0) > 0);
+  const paidStudents = safeStudents.filter(st => Number(st?.due_amount || 0) <= 0);
 
   const baseList = filterMode === 'due'
     ? dueStudents
-    : (filterMode === 'paid' ? paidStudents : students);
+    : (filterMode === 'paid' ? paidStudents : safeStudents);
 
   const filtered = baseList.filter(st => {
-    const q = search.toLowerCase();
+    const q = (search || '').toLowerCase();
     return (
-      st.name.toLowerCase().includes(q) ||
-      (st.course_or_details && st.course_or_details.toLowerCase().includes(q)) ||
-      (st.phone && st.phone.includes(q))
+      (st?.name || '').toLowerCase().includes(q) ||
+      (st?.course_or_details && String(st.course_or_details).toLowerCase().includes(q)) ||
+      (st?.phone && String(st.phone).includes(q))
     );
   });
 
-  const totalFeesAgreed = students.reduce((acc, curr) => acc + (curr.total_fee || 0), 0);
-  const totalFeesCollected = students.reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
+  const totalFeesAgreed = safeStudents.reduce((acc, curr) => acc + Number(curr?.total_fee || 0), 0);
+  const totalFeesCollected = safeStudents.reduce((acc, curr) => acc + Number(curr?.paid_amount || 0), 0);
   const totalDuesPending = Math.max(0, totalFeesAgreed - totalFeesCollected);
 
   return (

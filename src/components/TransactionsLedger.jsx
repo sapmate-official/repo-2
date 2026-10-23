@@ -49,9 +49,10 @@ export default function TransactionsLedger({ currency = '₹', accounts = [], on
         to_date: toDate,
         limit: 500
       });
-      setTransactions(data);
+      setTransactions(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
@@ -67,30 +68,31 @@ export default function TransactionsLedger({ currency = '₹', accounts = [], on
   };
 
   // Calculations for current filtered view
-  const totalInflow = transactions
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  const totalInflow = safeTransactions
     .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-  const totalOutflow = transactions
+  const totalOutflow = safeTransactions
     .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
   const netCashFlow = totalInflow - totalOutflow;
 
   const handleExportExcel = () => {
-    if (!transactions.length) return;
+    if (!safeTransactions.length) return;
 
-    const exportData = transactions.map((t, idx) => ({
+    const exportData = safeTransactions.map((t, idx) => ({
       'S.No': idx + 1,
       'Date': t.date,
-      'Type': t.type.toUpperCase(),
+      'Type': (t.type || '').toUpperCase(),
       'Category': t.category,
       'Party / Client': t.party_name || '-',
       'Description': t.description,
-      'Payment Mode': t.payment_mode.toUpperCase(),
+      'Payment Mode': (t.payment_mode || 'cash').toUpperCase(),
       'Account': t.account_name || 'Primary',
-      'Inflow Amount': t.type === 'income' ? t.amount : 0,
-      'Outflow Amount': t.type === 'expense' ? t.amount : 0,
+      'Inflow Amount': t.type === 'income' ? Number(t.amount || 0) : 0,
+      'Outflow Amount': t.type === 'expense' ? Number(t.amount || 0) : 0,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);

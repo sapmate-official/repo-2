@@ -7,14 +7,17 @@ import { X, Users, DollarSign, Calendar, Building2 } from 'lucide-react';
 export default function SalaryPayModal({ isOpen, onClose, onSalaryPaid, staff = [], accounts = [], currency = '₹' }) {
   if (!isOpen) return null;
 
-  const [selectedStaffId, setSelectedStaffId] = useState(staff[0]?.id || '');
+  const safeStaff = Array.isArray(staff) ? staff : [];
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
+
+  const [selectedStaffId, setSelectedStaffId] = useState(safeStaff[0]?.id || '');
   const [amount, setAmount] = useState('');
   const [monthYear, setMonthYear] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
   const [paymentMode, setPaymentMode] = useState('bank');
-  const [accountId, setAccountId] = useState(accounts[0]?.id || '');
+  const [accountId, setAccountId] = useState(safeAccounts[0]?.id || '');
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,12 +26,12 @@ export default function SalaryPayModal({ isOpen, onClose, onSalaryPaid, staff = 
   // Auto-fill salary from staff profile
   useEffect(() => {
     if (selectedStaffId) {
-      const member = staff.find(s => String(s.id) === String(selectedStaffId));
+      const member = safeStaff.find(s => String(s.id) === String(selectedStaffId));
       if (member) {
         setAmount(member.monthly_salary || '');
       }
     }
-  }, [selectedStaffId, staff]);
+  }, [selectedStaffId, safeStaff]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -102,7 +105,7 @@ export default function SalaryPayModal({ isOpen, onClose, onSalaryPaid, staff = 
               onChange={(e) => setSelectedStaffId(e.target.value)}
               className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 px-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
-              {staff.map((st) => (
+              {safeStaff.map((st) => (
                 <option key={st.id} value={st.id}>
                   {st.name} ({st.role}) — Base: {currency}{st.monthly_salary}
                 </option>
@@ -178,9 +181,9 @@ export default function SalaryPayModal({ isOpen, onClose, onSalaryPaid, staff = 
                 onChange={(e) => setAccountId(e.target.value)}
                 className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 px-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
-                {accounts.map(acc => (
+                {safeAccounts.map(acc => (
                   <option key={acc.id} value={acc.id}>
-                    {acc.name} ({currency}{acc.balance})
+                    {acc.name} ({currency}{Number(acc.balance || 0).toLocaleString()})
                   </option>
                 ))}
               </select>

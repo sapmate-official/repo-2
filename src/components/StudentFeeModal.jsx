@@ -15,17 +15,20 @@ export default function StudentFeeModal({
 }) {
   if (!isOpen) return null;
 
-  const studentsWithDue = students.filter(s => Number(s.due_amount || 0) > 0);
+  const safeStudents = Array.isArray(students) ? students : [];
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
+
+  const studentsWithDue = safeStudents.filter(s => Number(s?.due_amount || 0) > 0);
   const [showClearedStudents, setShowClearedStudents] = useState(false);
 
   // If a specific student was clicked from list, make sure they are selectable even if 0 due
   const eligibleStudents = showClearedStudents
-    ? students
+    ? safeStudents
     : (studentsWithDue.length > 0 
         ? (initialStudentId && !studentsWithDue.some(s => String(s.id) === String(initialStudentId))
-            ? [...studentsWithDue, students.find(s => String(s.id) === String(initialStudentId))].filter(Boolean)
+            ? [...studentsWithDue, safeStudents.find(s => String(s.id) === String(initialStudentId))].filter(Boolean)
             : studentsWithDue)
-        : students);
+        : safeStudents);
 
   const defaultId = initialStudentId 
     ? String(initialStudentId) 
@@ -34,13 +37,13 @@ export default function StudentFeeModal({
   const [selectedStudentId, setSelectedStudentId] = useState(defaultId);
   const [amount, setAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('cash');
-  const [accountId, setAccountId] = useState(accounts[0]?.id || '');
+  const [accountId, setAccountId] = useState(safeAccounts[0]?.id || '');
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const currentStudent = students.find(s => String(s.id) === String(selectedStudentId)) || eligibleStudents[0];
+  const currentStudent = safeStudents.find(s => String(s.id) === String(selectedStudentId)) || eligibleStudents[0];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -237,9 +240,9 @@ export default function StudentFeeModal({
                 onChange={(e) => setAccountId(e.target.value)}
                 className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 px-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                {accounts.map(acc => (
+                {safeAccounts.map(acc => (
                   <option key={acc.id} value={acc.id}>
-                    {acc.name} ({currency}{acc.balance})
+                    {acc.name} ({currency}{Number(acc.balance || 0).toLocaleString()})
                   </option>
                 ))}
               </select>

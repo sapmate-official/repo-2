@@ -28,6 +28,9 @@ export default function InvoiceCreateModal({
 }) {
   if (!isOpen) return null;
 
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
+  const safeStaff = Array.isArray(staff) ? staff : [];
+
   // Student & Course
   const [studentName, setStudentName] = useState('');
   const [studentPhone, setStudentPhone] = useState('');
@@ -37,13 +40,13 @@ export default function InvoiceCreateModal({
   const [paymentType, setPaymentType] = useState('full'); // 'full' | 'installment' | 'unpaid'
   const [amountPaidNow, setAmountPaidNow] = useState('');
   const [paymentMode, setPaymentMode] = useState('upi'); // 'cash', 'upi', 'bank', 'unpaid'
-  const [accountId, setAccountId] = useState(accounts[0]?.id || '');
+  const [accountId, setAccountId] = useState(safeAccounts[0]?.id || '');
   const [notes, setNotes] = useState('');
 
   // Incentive & Commission
   const [enableIncentive, setEnableIncentive] = useState(true);
   const [autoCalculate, setAutoCalculate] = useState(true); // Auto-calculate tier so user never has to remember!
-  const [selectedStaffId, setSelectedStaffId] = useState(staff[0]?.id || '');
+  const [selectedStaffId, setSelectedStaffId] = useState(safeStaff[0]?.id || '');
   const [incentiveRule, setIncentiveRule] = useState('1st Admission Incentive (₹600)');
   const [incentiveAmount, setIncentiveAmount] = useState(600);
   const [incentiveStatus, setIncentiveStatus] = useState('due'); // 'due' or 'paid_now'
@@ -81,14 +84,15 @@ export default function InvoiceCreateModal({
     let isMounted = true;
     api.getIncentivePreview(selectedStaffId, netAmount)
       .then((data) => {
-        if (!isMounted) return;
+        if (!isMounted || !data) return;
         setAutoDetails(data);
-        setIncentiveRule(data.autoRule);
-        setIncentiveAmount(data.autoIncentive);
+        const rule = data.rule_name || data.autoRule || 'Sales Incentive';
+        const amt = data.bonus_amount !== undefined ? data.bonus_amount : (data.autoIncentive || 600);
+        setIncentiveRule(rule);
+        setIncentiveAmount(amt);
       })
       .catch(() => {
         // Fallback calculation on client if preview fails
-        const count = 0;
         if (netAmount >= 40000) {
           setIncentiveRule('High-Value Sale Commission (₹5,000)');
           setIncentiveAmount(5000);
@@ -426,9 +430,9 @@ export default function InvoiceCreateModal({
                 onChange={(e) => setAccountId(e.target.value)}
                 className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 px-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                {accounts.map(acc => (
+                {safeAccounts.map(acc => (
                   <option key={acc.id} value={acc.id}>
-                    {acc.name} ({currency}{acc.balance.toLocaleString()})
+                    {acc.name} ({currency}{Number(acc.balance || 0).toLocaleString()})
                   </option>
                 ))}
               </select>
@@ -483,9 +487,9 @@ export default function InvoiceCreateModal({
                     onChange={(e) => setSelectedStaffId(e.target.value)}
                     className="w-full bg-slate-900 border border-indigo-500/30 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    {staff.map(s => (
+                    {safeStaff.map(s => (
                       <option key={s.id} value={s.id}>
-                        {s.name} ({s.role}) — {s.monthly_admissions || 0} sales this month
+                        {s.name} ({s.role})
                       </option>
                     ))}
                   </select>
@@ -499,15 +503,15 @@ export default function InvoiceCreateModal({
                       <div>
                         <span className="text-[11px] font-bold text-amber-300 block">
                           {autoDetails
-                            ? `Auto-Detected: Admission #${autoDetails.nextSaleIndex} this month`
+                            ? `Auto-Detected: Admission #${autoDetails.sale_number || autoDetails.nextSaleIndex || 1} this month`
                             : 'Auto-Calculating Tier...'}
                         </span>
                         <span className="text-[10px] text-slate-300">
                           {netAmount >= 40000
                             ? 'High-Value Course (≥ ₹40,000) → ₹5,000 Commission Applied!'
-                            : autoDetails?.nextSaleIndex === 1
+                            : (autoDetails?.sale_number || autoDetails?.nextSaleIndex || 1) === 1
                               ? '1st Sale: ₹600 Applied (No manual reminder needed)'
-                              : autoDetails?.nextSaleIndex === 2
+                              : (autoDetails?.sale_number || autoDetails?.nextSaleIndex || 1) === 2
                                 ? '2nd Sale: ₹700 Applied'
                                 : '3rd+ Sale: ₹800 Applied'}
                         </span>
@@ -531,7 +535,7 @@ export default function InvoiceCreateModal({
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                     {incentivePresets.map((preset, idx) => {
-                      const isSelected = incentiveRule.includes(preset.label) || (preset.amount === incentiveAmount && preset.amount > 0);
+                      const isSelected = (incentiveRule || '').includes(preset.label) || (preset.amount === incentiveAmount && preset.amount > 0);
                       return (
                         <button
                           key={idx}

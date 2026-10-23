@@ -67,7 +67,9 @@ export default function Dashboard({
     periods = {}
   } = data;
 
-  const accounts = propAccounts.length > 0 ? propAccounts : dataAccounts;
+  const accounts = Array.isArray(propAccounts) && propAccounts.length > 0 
+    ? propAccounts 
+    : (Array.isArray(dataAccounts) ? dataAccounts : []);
 
   // PERIOD OPTIONS CONFIGURATION
   const PERIOD_OPTIONS = [
@@ -165,7 +167,7 @@ export default function Dashboard({
             <div className="mt-3 flex flex-wrap gap-1.5 pt-2 border-t border-slate-800/80">
               {accounts.map(acc => (
                 <span key={acc.id} className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-slate-950/70 border border-slate-800 text-slate-300">
-                  {acc.name.split(' ')[0]}: <strong className="text-slate-100">{currency}{acc.balance.toLocaleString()}</strong>
+                  {(acc.name || 'Account').split(' ')[0]}: <strong className="text-slate-100">{currency}{Number(acc.balance || 0).toLocaleString()}</strong>
                 </span>
               ))}
             </div>

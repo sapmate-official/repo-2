@@ -7,12 +7,14 @@ import { X, TrendingDown, Tag, Building2, Calendar, CreditCard } from 'lucide-re
 export default function ExpenseModal({ isOpen, onClose, onExpenseRecorded, accounts = [], currency = '₹' }) {
   if (!isOpen) return null;
 
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
+
   const [category, setCategory] = useState('rent');
   const [amount, setAmount] = useState('');
   const [partyName, setPartyName] = useState('');
   const [description, setDescription] = useState('');
   const [paymentMode, setPaymentMode] = useState('cash');
-  const [accountId, setAccountId] = useState(accounts[0]?.id || '');
+  const [accountId, setAccountId] = useState(safeAccounts[0]?.id || '');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -176,9 +178,9 @@ export default function ExpenseModal({ isOpen, onClose, onExpenseRecorded, accou
                 onChange={(e) => setAccountId(e.target.value)}
                 className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 px-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500"
               >
-                {accounts.map(acc => (
+                {safeAccounts.map(acc => (
                   <option key={acc.id} value={acc.id}>
-                    {acc.name} ({currency}{acc.balance})
+                    {acc.name} ({currency}{Number(acc.balance || 0).toLocaleString()})
                   </option>
                 ))}
               </select>
