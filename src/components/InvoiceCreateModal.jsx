@@ -26,8 +26,6 @@ export default function InvoiceCreateModal({
   staff = [],
   currency = '₹'
 }) {
-  if (!isOpen) return null;
-
   const safeAccounts = Array.isArray(accounts) ? accounts : [];
   const safeStaff = Array.isArray(staff) ? staff : [];
 
@@ -179,6 +177,8 @@ export default function InvoiceCreateModal({
       setSubmitting(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn">

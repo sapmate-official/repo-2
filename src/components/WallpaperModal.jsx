@@ -8,8 +8,6 @@ export default function WallpaperModal({ isOpen, onClose }) {
   const { isDark, toggleTheme, wallpaper, selectWallpaper, customWallpaperUrl, setCustomWallpaperUrl } = useTheme();
   const [customInput, setCustomInput] = useState(customWallpaperUrl || '');
 
-  if (!isOpen) return null;
-
   const handleApplyCustom = (e) => {
     e.preventDefault();
     if (customInput.trim()) {
@@ -32,6 +30,8 @@ export default function WallpaperModal({ isOpen, onClose }) {
       reader.readAsDataURL(file);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">

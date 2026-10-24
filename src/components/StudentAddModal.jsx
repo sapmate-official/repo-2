@@ -5,8 +5,6 @@ import { api } from '../lib/api';
 import { X, UserPlus, GraduationCap, Phone, Mail, BookOpen } from 'lucide-react';
 
 export default function StudentAddModal({ isOpen, onClose, onStudentAdded, currency = '₹' }) {
-  if (!isOpen) return null;
-
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -44,6 +42,8 @@ export default function StudentAddModal({ isOpen, onClose, onStudentAdded, curre
       setLoading(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn">

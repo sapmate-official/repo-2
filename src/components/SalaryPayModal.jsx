@@ -5,8 +5,6 @@ import { api } from '../lib/api';
 import { X, Users, DollarSign, Calendar, Building2 } from 'lucide-react';
 
 export default function SalaryPayModal({ isOpen, onClose, onSalaryPaid, staff = [], accounts = [], currency = '₹' }) {
-  if (!isOpen) return null;
-
   const safeStaff = Array.isArray(staff) ? staff : [];
   const safeAccounts = Array.isArray(accounts) ? accounts : [];
 
@@ -25,13 +23,13 @@ export default function SalaryPayModal({ isOpen, onClose, onSalaryPaid, staff = 
 
   // Auto-fill salary from staff profile
   useEffect(() => {
-    if (selectedStaffId) {
-      const member = safeStaff.find(s => String(s.id) === String(selectedStaffId));
+    if (selectedStaffId && Array.isArray(staff)) {
+      const member = staff.find(s => String(s.id) === String(selectedStaffId));
       if (member) {
         setAmount(member.monthly_salary || '');
       }
     }
-  }, [selectedStaffId, safeStaff]);
+  }, [selectedStaffId, staff]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -67,6 +65,8 @@ export default function SalaryPayModal({ isOpen, onClose, onSalaryPaid, staff = 
       setLoading(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn">

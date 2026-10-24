@@ -258,8 +258,6 @@ export function TransactionEditModal({
     }
   }, [transaction, accounts]);
 
-  if (!isOpen || !transaction) return null;
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -285,6 +283,8 @@ export function TransactionEditModal({
       setLoading(false);
     }
   };
+
+  if (!isOpen || !transaction) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -504,15 +504,11 @@ export function TransactionDeleteModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (!isOpen || !transaction) return null;
-
-  const isInc = transaction.type === 'income';
-
   const handleDelete = async () => {
     setError('');
     setLoading(true);
     try {
-      await api.deleteTransaction(transaction.id);
+      await api.deleteTransaction(transaction?.id);
       onSuccess?.();
       onClose();
     } catch (err) {
@@ -520,6 +516,10 @@ export function TransactionDeleteModal({
       setLoading(false);
     }
   };
+
+  if (!isOpen || !transaction) return null;
+
+  const isInc = transaction.type === 'income';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">

@@ -15,8 +15,6 @@ import {
 } from 'lucide-react';
 
 export default function EraseDataModal({ isOpen, onClose, onEraseSuccess }) {
-  if (!isOpen) return null;
-
   const REQUIRED_PHRASE = 'ERASE ALL DATA';
 
   const [password, setPassword] = useState('');
@@ -61,6 +59,8 @@ export default function EraseDataModal({ isOpen, onClose, onEraseSuccess }) {
       setLoading(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">

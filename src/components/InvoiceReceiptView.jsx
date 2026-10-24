@@ -13,11 +13,11 @@ import {
 } from 'lucide-react';
 
 export default function InvoiceReceiptView({ invoice, onClose, currency = '₹' }) {
-  if (!invoice) return null;
-
   const [receiptMode, setReceiptMode] = useState('a4'); // 'a4' or 'thermal'
   const [copied, setCopied] = useState(false);
   const printAreaRef = useRef(null);
+
+  if (!invoice) return null;
 
   const business = invoice.business || {
     business_name: 'Alkaa Business +',

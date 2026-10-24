@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../lib/api';
@@ -63,7 +63,7 @@ export default function Home() {
   }, []);
 
   // Fetch Central Data
-  const refreshAllData = async () => {
+  const refreshAllData = useCallback(async () => {
     if (!user) return;
     try {
       const [dash, accs, invs, studs, stf, sals] = await Promise.all([
@@ -84,13 +84,13 @@ export default function Home() {
     } catch (err) {
       console.error('Data refresh error:', err);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
       refreshAllData();
     }
-  }, [user]);
+  }, [user, refreshAllData]);
 
   // Quick Action Handler
   const handleSelectQuickAction = (actionId: string) => {

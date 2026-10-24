@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
 import * as XLSX from 'xlsx';
 import {
@@ -38,7 +38,7 @@ export default function TransactionsLedger({ currency = '₹', accounts = [], on
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.getTransactions({
@@ -56,11 +56,11 @@ export default function TransactionsLedger({ currency = '₹', accounts = [], on
     } finally {
       setLoading(false);
     }
-  };
+  }, [type, category, search, fromDate, toDate]);
 
   useEffect(() => {
     fetchTransactions();
-  }, [type, category, fromDate, toDate]);
+  }, [fetchTransactions]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();

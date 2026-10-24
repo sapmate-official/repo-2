@@ -13,8 +13,6 @@ export default function StudentFeeModal({
   currency = '₹',
   initialStudentId = null
 }) {
-  if (!isOpen) return null;
-
   const safeStudents = Array.isArray(students) ? students : [];
   const safeAccounts = Array.isArray(accounts) ? accounts : [];
 
@@ -89,6 +87,8 @@ export default function StudentFeeModal({
       setLoading(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
