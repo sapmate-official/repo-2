@@ -31,6 +31,7 @@ import {
   Trash2,
   AlertTriangle,
   ShieldAlert,
+  ShieldCheck,
   Lock
 } from 'lucide-react';
 import EraseDataModal from './EraseDataModal';
@@ -90,6 +91,55 @@ export default function SettingsModal({ accounts = [], onAccountUpdated, currenc
   const [testLoading, setTestLoading] = useState(false);
   const [testResponse, setTestResponse] = useState(null);
   const [testError, setTestError] = useState(null);
+
+  // Security / Change Password state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (!currentPassword) {
+      setPasswordError('Please enter your current password');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirmation do not match');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const res = await api.changePassword({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+      setPasswordSuccess(res.message || 'Password updated successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setPasswordError(err.message || 'Failed to update password');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchApiKey();
@@ -515,6 +565,18 @@ print(response.json())`
             </button>
 
             <button
+              onClick={() => setActiveTab('security')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'security'
+                  ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Security &amp; Password</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('api')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'api'
@@ -828,6 +890,188 @@ print(response.json())`
                 <Trash2 className="w-4 h-4" />
                 <span>Erase All Data</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: SECURITY & PASSWORD */}
+      {activeTab === 'security' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
+          {/* Change Password Card */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl">
+            <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-800">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center border border-amber-500/30">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  Change Admin Password
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Update your login credentials securely
+                </p>
+              </div>
+            </div>
+
+            {passwordSuccess && (
+              <div className="mb-4 p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+                <span>{passwordSuccess}</span>
+              </div>
+            )}
+
+            {passwordError && (
+              <div className="mb-4 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{passwordError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                  Current Password *
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    required
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 pl-10 pr-10 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1"
+                  >
+                    {showCurrentPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                  New Password * (Min. 6 characters)
+                </label>
+                <div className="relative">
+                  <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new strong password"
+                    className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 pl-10 pr-10 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1"
+                  >
+                    {showNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                  Confirm New Password *
+                </label>
+                <div className="relative">
+                  <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-type new password"
+                    className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 pl-10 pr-10 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+                {newPassword && confirmPassword && (
+                  <p className={`text-[11px] mt-1.5 font-medium ${newPassword === confirmPassword ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {newPassword === confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={passwordLoading}
+                className="w-full mt-3 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-600/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                {passwordLoading ? (
+                  <div className="w-4 h-4 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Update Password</span>
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Security Overview & Architecture Card */}
+          <div className="space-y-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl">
+              <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-800">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    Authentication &amp; Security Specs
+                  </h3>
+                  <p className="text-xs text-slate-400">Current system encryption parameters</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+                  <span className="text-xs text-slate-400 font-medium">Logged-in Administrator</span>
+                  <span className="text-xs font-mono font-bold text-indigo-300">
+                    {profile?.username || 'admin'}
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+                  <span className="text-xs text-slate-400 font-medium">Password Encryption</span>
+                  <span className="text-xs font-bold text-emerald-400">
+                    bcrypt (Blowfish 10 Salt Rounds)
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+                  <span className="text-xs text-slate-400 font-medium">Session Token</span>
+                  <span className="text-xs font-bold text-slate-200">
+                    HMAC-SHA256 JWT Bearer
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+                  <span className="text-xs text-slate-400 font-medium">Database Layer</span>
+                  <span className="text-xs font-bold text-cyan-400">
+                    Neon Serverless Postgres (SSL Enabled)
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-5 p-3.5 rounded-2xl bg-slate-950/40 border border-slate-800/80 text-[11px] text-slate-400 leading-relaxed">
+                <p className="font-semibold text-slate-300 mb-1">Security Best Practice:</p>
+                Default credentials (<code className="text-amber-400">admin / admin123</code>) should be changed immediately after initial setup to safeguard financial balances, student records, and salary payouts.
+              </div>
             </div>
           </div>
         </div>

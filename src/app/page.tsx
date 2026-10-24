@@ -192,7 +192,8 @@ export default function Home() {
         {activeTab === 'students' && (
           <StudentsList
             students={students}
-            onOpenPayFee={(studentId: any) => {
+            onOpenAddStudent={() => setShowStudentAdd(true)}
+            onOpenPayFee={(studentId?: any) => {
               setSelectedFeeStudentId(studentId || null);
               setShowStudentFee(true);
             }}

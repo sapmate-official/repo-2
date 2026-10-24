@@ -48,6 +48,8 @@ export const api = {
   login: (username: string, password: string) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
   getProfile: () => apiRequest('/auth/profile'),
   updateProfile: (profile: any) => apiRequest('/auth/profile', { method: 'PUT', body: JSON.stringify(profile) }),
+  changePassword: (data: { currentPassword: string; newPassword: string; confirmPassword?: string }) =>
+    apiRequest('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
 
   // Dashboard
   getDashboard: () => apiRequest('/dashboard'),

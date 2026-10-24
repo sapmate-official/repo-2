@@ -15,8 +15,8 @@ import {
 
 export default function StudentsList({
   students = [],
-  onOpenAddStudent,
-  onOpenPayFee,
+  onOpenAddStudent = () => {},
+  onOpenPayFee = (_studentId = null) => {},
   currency = '₹'
 }) {
   const [search, setSearch] = useState('');
