@@ -21,7 +21,6 @@ import SalaryPayModal from '../components/SalaryPayModal';
 import ExpenseModal from '../components/ExpenseModal';
 import TransactionsLedger from '../components/TransactionsLedger';
 import ExcelMigrationWizard from '../components/ExcelMigrationWizard';
-import AlkaaFilesSFTP from '../components/AlkaaFilesSFTP';
 import SettingsModal from '../components/SettingsModal';
 import QuickActionModal from '../components/QuickActionModal';
 import WallpaperModal from '../components/WallpaperModal';
@@ -228,10 +227,6 @@ export default function Home() {
             }}
             currency={currency}
           />
-        )}
-
-        {activeTab === 'sftp' && (
-          <AlkaaFilesSFTP />
         )}
 
         {activeTab === 'settings' && (

@@ -10,7 +10,6 @@ import {
   Users,
   ArrowLeftRight,
   FileSpreadsheet,
-  FolderArchive,
   Settings,
   Plus,
   LogOut,
@@ -38,7 +37,6 @@ export default function Navigation({
     { id: 'students', label: 'Student Fees', icon: GraduationCap },
     { id: 'salaries', label: 'Salaries & Incentives', icon: Users },
     { id: 'ledger', label: 'Ledger & P&L', icon: ArrowLeftRight },
-    { id: 'sftp', label: 'SFTP (Flykites)', icon: FolderArchive },
     { id: 'migration', label: 'Excel Migration', icon: FileSpreadsheet },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];

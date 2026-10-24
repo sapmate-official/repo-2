@@ -97,13 +97,6 @@ export const api = {
   getApiKey: () => apiRequest('/v1/api-key'),
   regenerateApiKey: () => apiRequest('/v1/api-key/regenerate', { method: 'POST' }),
 
-  // Alkaa Files / SFTP
-  getSftpStatus: () => apiRequest('/sftp/status'),
-  getSftpFiles: () => apiRequest('/sftp/files'),
-  testSftpAdapter: () => apiRequest('/sftp/test', { method: 'POST' }),
-  syncSftpFiles: () => apiRequest('/sftp/sync', { method: 'POST' }),
-  uploadSampleSftpFiles: () => apiRequest('/sftp/upload-sample', { method: 'POST' }),
-
   // Danger Zone
   eraseData: (data: any) => apiRequest('/system/erase-data', { method: 'POST', body: JSON.stringify(data) }),
 };
