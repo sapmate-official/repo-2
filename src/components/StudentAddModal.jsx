@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { api } from '../lib/api';
-import { X, UserPlus, GraduationCap, Phone, Mail, BookOpen } from 'lucide-react';
+import { X, UserPlus } from 'lucide-react';
 
 export default function StudentAddModal({ isOpen, onClose, onStudentAdded, currency = '₹' }) {
   const [name, setName] = useState('');
@@ -112,6 +112,19 @@ export default function StudentAddModal({ isOpen, onClose, onStudentAdded, curre
                 className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">
+              Email Address (Optional)
+            </label>
+            <input
+              type="email"
+              placeholder="e.g. student@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
 
           <div>

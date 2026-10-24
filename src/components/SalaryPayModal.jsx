@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { X, Users, DollarSign, Calendar, Building2 } from 'lucide-react';
+import { X, Users } from 'lucide-react';
 
-export default function SalaryPayModal({ isOpen, onClose, onSalaryPaid, staff = [], accounts = [], currency = '₹' }) {
+export default function SalaryPayModal({ isOpen, onClose, onSalaryPaid, staff = [], accounts = [], currency = '₹', initialStaffId = null }) {
   const safeStaff = Array.isArray(staff) ? staff : [];
   const safeAccounts = Array.isArray(accounts) ? accounts : [];
 
-  const [selectedStaffId, setSelectedStaffId] = useState(safeStaff[0]?.id || '');
+  const [selectedStaffId, setSelectedStaffId] = useState(initialStaffId || safeStaff[0]?.id || '');
   const [amount, setAmount] = useState('');
   const [monthYear, setMonthYear] = useState(() => {
     const d = new Date();

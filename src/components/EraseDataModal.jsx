@@ -10,8 +10,7 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
-  ShieldAlert,
-  RotateCcw
+  ShieldAlert
 } from 'lucide-react';
 
 export default function EraseDataModal({ isOpen, onClose, onEraseSuccess }) {
@@ -43,7 +42,7 @@ export default function EraseDataModal({ isOpen, onClose, onEraseSuccess }) {
 
     setLoading(true);
     try {
-      const res = await api.eraseData({
+      await api.eraseData({
         password,
         phrase: phrase.trim()
       });

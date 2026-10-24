@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTheme, WALLPAPERS } from '../context/ThemeContext';
-import { Palette, X, Check, Image, Sun, Moon, Sparkles } from 'lucide-react';
+import { Palette, X, Check, Image, Sun, Moon } from 'lucide-react';
 
 export default function WallpaperModal({ isOpen, onClose }) {
   const { isDark, toggleTheme, wallpaper, selectWallpaper, customWallpaperUrl, setCustomWallpaperUrl } = useTheme();

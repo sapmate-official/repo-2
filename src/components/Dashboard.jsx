@@ -8,18 +8,12 @@ import {
   Receipt,
   GraduationCap,
   Users,
-  Calendar,
   ArrowUpRight,
   ArrowDownRight,
   FileSpreadsheet,
   AlertCircle,
-  Sparkles,
   BarChart3,
-  Layers,
-  CheckCircle2,
   Clock,
-  ChevronRight,
-  Landmark,
   Eye,
   Edit3,
   Trash2
@@ -32,9 +26,9 @@ import {
 
 export default function Dashboard({
   data,
-  onOpenQuickAction,
+  onOpenQuickAction: _onOpenQuickAction,
   onSelectAction,
-  onViewInvoice,
+  onViewInvoice: _onViewInvoice,
   onRefreshData,
   accounts: propAccounts = [],
   currency = '₹'
@@ -63,7 +57,7 @@ export default function Dashboard({
     recentTransactions = [],
     monthlyTrends = [],
     studentStats = {},
-    allTime = {},
+    allTime: _allTime = {},
     periods = {}
   } = data;
 

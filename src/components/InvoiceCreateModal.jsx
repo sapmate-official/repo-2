@@ -4,16 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import {
   X,
-  Plus,
   Receipt,
   User,
   Phone,
   BookOpen,
-  DollarSign,
   Gift,
-  Award,
-  Users,
-  CheckCircle2,
   Sparkles,
   Zap
 } from 'lucide-react';
@@ -590,6 +585,19 @@ export default function InvoiceCreateModal({
                 </div>
               </div>
             )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">
+              Admission Notes / Remarks (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. 2nd Installment due on 15th next month"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
           </div>
 
           {/* Grand Total Summary */}

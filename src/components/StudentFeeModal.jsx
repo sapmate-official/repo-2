@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { api } from '../lib/api';
-import { X, GraduationCap, DollarSign, Calendar, CreditCard } from 'lucide-react';
+import { X, GraduationCap } from 'lucide-react';
 
 export default function StudentFeeModal({ 
   isOpen, 

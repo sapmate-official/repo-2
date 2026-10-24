@@ -9,7 +9,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const { id } = await params;
     const body = await req.json();
-    const { new_balance, reason } = body;
+    const { new_balance } = body;
 
     const accountId = parseInt(id, 10);
     const account = await prisma.account.findUnique({ where: { id: accountId } });

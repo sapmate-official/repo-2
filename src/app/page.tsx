@@ -306,6 +306,7 @@ export default function Home() {
       {/* 7. Pay Staff Salary */}
       <SalaryPayModal
         isOpen={showSalaryPay}
+        initialStaffId={selectedStaffId}
         onClose={() => {
           setShowSalaryPay(false);
           setSelectedStaffId(null);

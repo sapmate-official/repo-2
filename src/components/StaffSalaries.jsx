@@ -7,15 +7,10 @@ import {
   UserPlus,
   DollarSign,
   Calendar,
-  CreditCard,
-  Briefcase,
   Phone,
-  CheckCircle2,
   X,
   Gift,
-  Award,
-  Clock,
-  Sparkles
+  Award
 } from 'lucide-react';
 
 export default function StaffSalaries({
@@ -117,9 +112,6 @@ export default function StaffSalaries({
       setLoading(false);
     }
   };
-
-  const totalMonthlyPayroll = safeStaff.reduce((sum, s) => sum + Number(s?.monthly_salary || 0), 0);
-  const totalSalariesDisbursed = safeSalaries.reduce((sum, s) => sum + Number(s?.amount || 0), 0);
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
@@ -376,13 +368,13 @@ export default function StaffSalaries({
             </span>
           </div>
 
-          {salaries.length === 0 ? (
+          {safeSalaries.length === 0 ? (
             <div className="text-center py-8 text-slate-500 text-xs">
               No base salary payouts recorded yet.
             </div>
           ) : (
             <div className="divide-y divide-slate-800/60">
-              {salaries.map((sal) => (
+              {safeSalaries.map((sal) => (
                 <div key={sal.id} className="py-3 flex items-center justify-between gap-3 hover:bg-slate-800/30 px-2 rounded-xl transition-colors">
                   <div>
                     <div className="flex items-center gap-2">

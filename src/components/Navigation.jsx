@@ -15,9 +15,7 @@ import {
   LogOut,
   Building2,
   Wallet,
-  Palette,
-  Sun,
-  Moon
+  Palette
 } from 'lucide-react';
 
 export default function Navigation({
@@ -29,7 +27,7 @@ export default function Navigation({
   currency = '₹'
 }) {
   const { profile, logout } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark } = useTheme();
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },

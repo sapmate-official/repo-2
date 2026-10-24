@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { Printer, Share2, X, GraduationCap, CheckCircle2 } from 'lucide-react';
 
 export default function FeeReceiptView({ receipt, student, onClose, currency = '₹', business }) {

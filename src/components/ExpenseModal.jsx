@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { api } from '../lib/api';
-import { X, TrendingDown, Tag, Building2, Calendar, CreditCard } from 'lucide-react';
+import { X, TrendingDown } from 'lucide-react';
 
 export default function ExpenseModal({ isOpen, onClose, onExpenseRecorded, accounts = [], currency = '₹' }) {
   const safeAccounts = Array.isArray(accounts) ? accounts : [];

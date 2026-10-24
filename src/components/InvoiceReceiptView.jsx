@@ -3,10 +3,8 @@
 import React, { useState, useRef } from 'react';
 import {
   Printer,
-  Download,
   Share2,
   X,
-  Building2,
   CheckCircle2,
   Copy,
   Receipt

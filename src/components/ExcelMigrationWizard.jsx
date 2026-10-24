@@ -5,7 +5,6 @@ import { api } from '../lib/api';
 import {
   FileSpreadsheet,
   Upload,
-  ArrowRight,
   CheckCircle2,
   AlertCircle,
   FileCheck,

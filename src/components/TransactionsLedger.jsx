@@ -5,13 +5,9 @@ import { api } from '../lib/api';
 import * as XLSX from 'xlsx';
 import {
   ArrowLeftRight,
-  Search,
-  Filter,
   Download,
-  Calendar,
   ArrowUpRight,
   ArrowDownRight,
-  FileSpreadsheet,
   Eye,
   Edit3,
   Trash2
@@ -61,11 +57,6 @@ export default function TransactionsLedger({ currency = '₹', accounts = [], on
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    fetchTransactions();
-  };
 
   // Calculations for current filtered view
   const safeTransactions = Array.isArray(transactions) ? transactions : [];

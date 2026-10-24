@@ -6,7 +6,6 @@ import {
   Search,
   Plus,
   Phone,
-  BookOpen,
   DollarSign,
   AlertCircle,
   CheckCircle2,
@@ -63,7 +62,14 @@ export default function StudentsList({
             </div>
           </div>
 
-          <div className="self-stretch sm:self-auto">
+          <div className="flex items-center gap-2 self-stretch sm:self-auto">
+            <button
+              onClick={() => onOpenAddStudent()}
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs transition-all active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Enroll Student</span>
+            </button>
             <button
               onClick={() => onOpenPayFee()}
               className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all active:scale-95"
