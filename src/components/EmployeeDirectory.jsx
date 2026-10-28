@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../lib/api';
@@ -7,38 +8,26 @@ import { useTheme } from '../context/ThemeContext';
 import {
   Users,
   Search,
-  Filter,
-  Plus,
   Eye,
   EyeOff,
   KeyRound,
   Edit2,
   Trash2,
-  UserCheck,
-  Building,
   MapPin,
   Briefcase,
-  Calendar,
-  Phone,
-  Mail,
   Shield,
   ShieldAlert,
   ShieldCheck,
   CheckCircle2,
-  Clock,
-  Sparkles,
   DollarSign,
   Award,
   BookOpen,
   ArrowRight,
   X,
-  Upload,
   Download,
   FileSpreadsheet,
   AlertTriangle,
   Lock,
-  Layers,
-  ChevronRight,
   TrendingUp
 } from 'lucide-react';
 
@@ -91,7 +80,7 @@ export default function EmployeeDirectory({ currency = '₹', onRefreshGlobal })
   }, []);
 
   // Safe list reference
-  const safeEmployees = Array.isArray(employees) ? employees : [];
+  const safeEmployees = useMemo(() => (Array.isArray(employees) ? employees : []), [employees]);
 
   // Compute departments list
   const departments = useMemo(() => {
@@ -382,6 +371,20 @@ export default function EmployeeDirectory({ currency = '₹', onRefreshGlobal })
               <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400" />
               <span className="hidden sm:inline">Sample CSV</span>
             </button>
+
+            {/* Import CSV */}
+            <label
+              title="Import Employees via CSV"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium cursor-pointer transition-all ${
+                isDark
+                  ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white'
+                  : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Import CSV</span>
+              <input type="file" accept=".csv" onChange={handleUploadCSV} className="hidden" />
+            </label>
 
             {/* Export JSON */}
             <button
@@ -851,7 +854,7 @@ export default function EmployeeDirectory({ currency = '₹', onRefreshGlobal })
 // ==========================================
 // COMPONENT: UPSERT EMPLOYEE MODAL
 // ==========================================
-function UpsertEmployeeModal({ isOpen, initialData, currency = '₹', onClose, onSuccess }) {
+function UpsertEmployeeModal({ _isOpen, initialData, currency = '₹', onClose, onSuccess }) {
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('personal'); // 'personal' | 'job' | 'access'
   const [loading, setLoading] = useState(false);
@@ -1369,7 +1372,7 @@ function UpsertEmployeeModal({ isOpen, initialData, currency = '₹', onClose, o
 // ==========================================
 // COMPONENT: RESET PASSWORD MODAL
 // ==========================================
-function ResetPasswordModal({ isOpen, employee, onClose, onSuccess }) {
+function ResetPasswordModal({ _isOpen, employee, onClose, onSuccess }) {
   const { isDark } = useTheme();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -1512,7 +1515,7 @@ function ResetPasswordModal({ isOpen, employee, onClose, onSuccess }) {
 // COMPONENT: EMPLOYEE PROFILE DRAWER / MODAL
 // ==========================================
 function EmployeeProfileDrawer({
-  isOpen,
+  _isOpen,
   employee,
   loading,
   currency = '₹',

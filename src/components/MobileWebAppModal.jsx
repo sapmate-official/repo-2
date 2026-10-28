@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
@@ -12,13 +13,10 @@ import {
   ExternalLink,
   Sparkles,
   ShieldCheck,
-  Share2,
-  HelpCircle,
   X,
   Wifi,
   Globe,
   Zap,
-  UserCheck
 } from 'lucide-react';
 
 export default function MobileWebAppModal({ isOpen, onClose }) {
@@ -58,7 +56,7 @@ export default function MobileWebAppModal({ isOpen, onClose }) {
       const res = await api.getEmployees();
       const list = Array.isArray(res) ? res : (res?.employees || []);
       setEmployeesList(list);
-    } catch (e) {
+    } catch (_e) {
       // ignore
     }
   };

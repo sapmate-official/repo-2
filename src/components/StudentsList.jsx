@@ -5,9 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   GraduationCap,
   Search,
-  Plus,
   Phone,
-  BookOpen,
   DollarSign,
   AlertCircle,
   CheckCircle2,
@@ -66,8 +64,18 @@ export default function StudentsList({
           </div>
 
           {isAdmin && (
-            <div className="self-stretch sm:self-auto">
+            <div className="self-stretch sm:self-auto flex items-center gap-2">
+              {onOpenAddStudent && (
+                <button
+                  type="button"
+                  onClick={() => onOpenAddStudent()}
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition-all active:scale-95"
+                >
+                  <span>+ Enroll Student</span>
+                </button>
+              )}
               <button
+                type="button"
                 onClick={() => onOpenPayFee()}
                 className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all active:scale-95"
               >

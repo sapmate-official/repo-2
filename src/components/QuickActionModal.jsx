@@ -9,8 +9,6 @@ import {
   Users,
   TrendingDown,
   FileSpreadsheet,
-  WalletCards,
-  Smartphone
 } from 'lucide-react';
 
 export default function QuickActionModal({ isOpen, onClose, onSelectAction }) {

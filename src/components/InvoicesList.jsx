@@ -6,8 +6,6 @@ import {
   Receipt,
   Search,
   Plus,
-  Printer,
-  Calendar,
   Eye,
   CheckCircle2,
   Clock

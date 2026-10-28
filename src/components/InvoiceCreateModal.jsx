@@ -4,16 +4,12 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from '../lib/api';
 import {
   X,
-  Plus,
   Receipt,
   User,
   Phone,
   BookOpen,
-  DollarSign,
   Gift,
-  Award,
   Users,
-  CheckCircle2,
   Sparkles,
   Zap,
   Search,
@@ -117,7 +113,6 @@ export default function InvoiceCreateModal({
       })
       .catch(() => {
         // Fallback calculation on client if preview fails
-        const count = 0;
         if (netAmount >= 40000) {
           setIncentiveRule('High-Value Sale Commission (₹5,000)');
           setIncentiveAmount(5000);
@@ -706,6 +701,20 @@ export default function InvoiceCreateModal({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Notes (Optional) */}
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+              Internal Notes (Optional)
+            </label>
+            <input
+              type="text"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. Referred by alumna, batch starts Monday"
+              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
 
           {/* Grand Total Summary */}

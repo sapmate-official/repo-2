@@ -9,16 +9,12 @@ import {
   Calendar,
   Wallet,
   CreditCard,
-  Tag,
   User,
   FileText,
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
   CheckCircle2,
-  Building2,
-  Clock,
-  Hash
 } from 'lucide-react';
 
 const COMMON_CATEGORIES = [

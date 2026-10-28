@@ -5,18 +5,12 @@ import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import {
   Users,
-  UserPlus,
   DollarSign,
   Calendar,
-  CreditCard,
-  Briefcase,
   Phone,
-  CheckCircle2,
   X,
   Gift,
   Award,
-  Clock,
-  Sparkles
 } from 'lucide-react';
 
 export default function StaffSalaries({
@@ -40,8 +34,6 @@ export default function StaffSalaries({
   const [incentiveAccountId, setIncentiveAccountId] = useState(accounts[0]?.id || '');
   const [incentivePayDate, setIncentivePayDate] = useState(new Date().toISOString().split('T')[0]);
   const [disbursing, setDisbursing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const fetchIncentives = async () => {
     setLoadingIncentives(true);
@@ -79,9 +71,6 @@ export default function StaffSalaries({
       setDisbursing(false);
     }
   };
-
-  const totalMonthlyPayroll = staff.reduce((sum, s) => sum + (s.monthly_salary || 0), 0);
-  const totalSalariesDisbursed = salaries.reduce((sum, s) => sum + (s.amount || 0), 0);
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">

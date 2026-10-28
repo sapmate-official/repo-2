@@ -9,10 +9,6 @@ import {
   Wallet,
   Plus,
   CheckCircle2,
-  Phone,
-  Mail,
-  MapPin,
-  Coins,
   Key,
   Code2,
   Copy,
@@ -22,7 +18,6 @@ import {
   EyeOff,
   Zap,
   Play,
-  Terminal,
   AlertCircle,
   Database,
   ArrowDownCircle,
@@ -35,8 +30,6 @@ import {
   Users,
   UserPlus,
   Shield,
-  UserCheck,
-  BadgeCheck
 } from 'lucide-react';
 import EraseDataModal from './EraseDataModal';
 

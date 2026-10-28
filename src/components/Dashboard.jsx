@@ -9,18 +9,14 @@ import {
   Receipt,
   GraduationCap,
   Users,
-  Calendar,
   ArrowUpRight,
   ArrowDownRight,
   FileSpreadsheet,
   AlertCircle,
   Sparkles,
   BarChart3,
-  Layers,
   CheckCircle2,
   Clock,
-  ChevronRight,
-  Landmark,
   Eye,
   Edit3,
   Trash2
@@ -40,6 +36,9 @@ export default function Dashboard({
   accounts: propAccounts = [],
   currency = '₹'
 }) {
+  void onOpenQuickAction;
+  void onViewInvoice;
+
   const { user, profile } = useAuth();
   const isAdmin = user?.role === 'admin' || profile?.role === 'admin';
 
@@ -67,7 +66,7 @@ export default function Dashboard({
     recentTransactions = [],
     monthlyTrends = [],
     studentStats = {},
-    allTime = {},
+    allTime: _allTime = {},
     periods = {}
   } = data;
 
