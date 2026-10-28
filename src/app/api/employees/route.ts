@@ -113,16 +113,9 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    const distinctDepts = await prisma.staff.findMany({
-      where: { department: { not: '' } },
-      select: { department: true },
-      distinct: ['department'],
-    });
-
-    const departments = distinctDepts
-      .map((d) => d.department)
-      .filter(Boolean)
-      .sort();
+    const departments = Array.from(
+      new Set(rawEmployees.map((s) => s.department).filter(Boolean))
+    ).sort();
 
     return NextResponse.json({
       employees,
