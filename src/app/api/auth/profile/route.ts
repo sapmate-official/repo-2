@@ -29,6 +29,15 @@ export async function GET(req: NextRequest) {
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
+    // Auto-sync admin identity to Kabir Khan if currently using default placeholder
+    if (user.username === 'admin' && (!user.email || user.email === 'contact@alkaabusiness.com')) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { email: 'Kabir.khan@shapenxt.com' },
+      });
+      user.email = 'Kabir.khan@shapenxt.com';
+    }
+
     let employeeData = null;
     if (user.staffId) {
       employeeData = await prisma.staff.findUnique({

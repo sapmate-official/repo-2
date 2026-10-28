@@ -10,8 +10,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { username },
+    const identifier = String(username).trim();
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username: identifier },
+          { email: { equals: identifier, mode: 'insensitive' } },
+          ...(identifier.toLowerCase() === 'kabir' ? [{ username: 'admin' }] : []),
+        ],
+      },
     });
 
     if (!user) {
@@ -21,6 +28,15 @@ export async function POST(req: NextRequest) {
     const isValid = bcrypt.compareSync(password, user.passwordHash);
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
+
+    // Auto-sync admin identity to Kabir Khan if currently using default placeholder
+    if (user.username === 'admin' && (!user.email || user.email === 'contact@alkaabusiness.com' || identifier.toLowerCase().includes('kabir'))) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { email: 'Kabir.khan@shapenxt.com' },
+      });
+      user.email = 'Kabir.khan@shapenxt.com';
     }
 
     const role = user.role || 'admin';

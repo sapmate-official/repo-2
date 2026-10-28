@@ -13,7 +13,7 @@ export async function seedDatabase() {
         businessName: 'Alkaa Business +',
         tagline: 'Course Admissions & Smart Accounting',
         phone: '+91 98765 43210',
-        email: 'contact@alkaabusiness.com',
+        email: 'Kabir.khan@shapenxt.com',
         address: 'Headquarters Campus Main Road',
         currency: '₹',
         invoicePrefix: 'ADM',

@@ -67,7 +67,7 @@ export default function Navigation({
   const email = profile?.email || user?.email || '';
 
   if (isAdmin) {
-    if (email && email.toLowerCase().includes('kabir')) {
+    if ((email && email.toLowerCase().includes('kabir')) || user?.username?.toLowerCase() === 'kabir') {
       displayName = 'Kabir Khan';
     } else if (user?.username && user.username !== 'admin') {
       displayName = user.username.charAt(0).toUpperCase() + user.username.slice(1);
