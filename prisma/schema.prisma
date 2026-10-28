@@ -11,6 +11,9 @@ model User {
   id             Int       @id @default(autoincrement())
   username       String    @unique
   passwordHash   String    @map("password_hash")
+  role           String    @default("admin")
+  staffId        Int?      @map("staff_id")
+  avatar         String    @default("")
   businessName   String    @default("Alkaa Business +") @map("business_name")
   tagline        String    @default("Course Admissions & Smart Accounting")
   phone          String    @default("")
@@ -105,16 +108,34 @@ model InvoiceItem {
 }
 
 model Staff {
-  id             Int              @id @default(autoincrement())
-  name           String
-  role           String           @default("Course Counselor")
-  phone          String           @default("")
-  monthlySalary  Decimal          @default(0) @map("monthly_salary") @db.Decimal(15, 2)
-  status         String           @default("active")
-  createdAt      DateTime         @default(now()) @map("created_at")
+  id               Int              @id @default(autoincrement())
+  employeeId       String           @default("") @map("employee_id")
+  name             String
+  role             String           @default("Course Counselor")
+  jobTitle         String           @default("Staff") @map("job_title")
+  department       String           @default("General")
+  location         String           @default("Headquarters (HQ)")
+  employmentType   String           @default("Full-Time") @map("employment_type")
+  presence         String           @default("Present")
+  phone            String           @default("")
+  email            String           @default("")
+  monthlySalary    Decimal          @default(0) @map("monthly_salary") @db.Decimal(15, 2)
+  status           String           @default("active")
+  cohorts          String           @default("")
+  courses          String           @default("")
+  dob              String           @default("")
+  joiningDate      String           @default("") @map("joining_date")
+  address          String           @default("")
+  emergencyContact String           @default("") @map("emergency_contact")
+  avatar           String           @default("")
+  incentiveRule    String           @default("") @map("incentive_rule")
+  systemAccess     String           @default("none") @map("system_access")
+  userId           Int?             @map("user_id")
+  lastModified     DateTime?        @map("last_modified")
+  createdAt        DateTime         @default(now()) @map("created_at")
 
-  incentives     StaffIncentive[]
-  salaryPayments SalaryPayment[]
+  incentives       StaffIncentive[]
+  salaryPayments   SalaryPayment[]
 
   @@map("staff")
 }

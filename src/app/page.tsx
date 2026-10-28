@@ -24,6 +24,8 @@ import ExcelMigrationWizard from '../components/ExcelMigrationWizard';
 import SettingsModal from '../components/SettingsModal';
 import QuickActionModal from '../components/QuickActionModal';
 import WallpaperModal from '../components/WallpaperModal';
+import EmployeeDirectory from '../components/EmployeeDirectory';
+import MobileWebAppModal from '../components/MobileWebAppModal';
 
 export default function Home() {
   const { user, profile, loading: authLoading } = useAuth();
@@ -42,6 +44,7 @@ export default function Home() {
 
   // Modals & Sheets
   const [showQuickAction, setShowQuickAction] = useState(false);
+  const [showMobileModal, setShowMobileModal] = useState(false);
   const [showInvoiceCreate, setShowInvoiceCreate] = useState(false);
   const [activeInvoiceReceipt, setActiveInvoiceReceipt] = useState<any>(null);
 
@@ -61,6 +64,14 @@ export default function Home() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const isAdmin = user?.role === 'admin' || profile?.role === 'admin';
+
+  useEffect(() => {
+    if (!isAdmin && activeTab === 'employees') {
+      setActiveTab('dashboard');
+    }
+  }, [isAdmin, activeTab]);
 
   // Fetch Central Data
   const refreshAllData = useCallback(async () => {
@@ -94,7 +105,9 @@ export default function Home() {
 
   // Quick Action Handler
   const handleSelectQuickAction = (actionId: string) => {
-    if (actionId === 'new_sale') setShowInvoiceCreate(true);
+    if (actionId === 'open_mobile_app') setShowMobileModal(true);
+    else if (actionId === 'open_employees' && isAdmin) setActiveTab('employees');
+    else if (actionId === 'new_sale') setShowInvoiceCreate(true);
     else if (actionId === 'student_fee') setShowStudentFee(true);
     else if (actionId === 'pay_salary') setShowSalaryPay(true);
     else if (actionId === 'add_expense') setShowExpenseModal(true);
@@ -162,6 +175,7 @@ export default function Home() {
         setActiveTab={setActiveTab}
         onOpenQuickAction={() => setShowQuickAction(true)}
         onOpenWallpaperModal={() => setShowWallpaperModal(true)}
+        onOpenMobileModal={() => setShowMobileModal(true)}
         totalBalance={dashboardData?.totalBalance || 0}
         currency={currency}
       />
@@ -177,6 +191,13 @@ export default function Home() {
             onRefreshData={refreshAllData}
             accounts={accounts}
             currency={currency}
+          />
+        )}
+
+        {activeTab === 'employees' && isAdmin && (
+          <EmployeeDirectory
+            currency={currency}
+            onRefreshGlobal={refreshAllData}
           />
         )}
 
@@ -330,6 +351,12 @@ export default function Home() {
       <WallpaperModal
         isOpen={showWallpaperModal}
         onClose={() => setShowWallpaperModal(false)}
+      />
+
+      {/* 10. Phone Web App & 1-Click Login Modal */}
+      <MobileWebAppModal
+        isOpen={showMobileModal}
+        onClose={() => setShowMobileModal(false)}
       />
     </div>
   );

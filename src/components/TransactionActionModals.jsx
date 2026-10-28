@@ -9,12 +9,16 @@ import {
   Calendar,
   Wallet,
   CreditCard,
+  Tag,
   User,
   FileText,
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
-  CheckCircle2
+  CheckCircle2,
+  Building2,
+  Clock,
+  Hash
 } from 'lucide-react';
 
 const COMMON_CATEGORIES = [
@@ -179,28 +183,32 @@ export function TransactionDetailsModal({
 
         {/* Modal Footer Actions */}
         <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between gap-3">
-          <button
-            onClick={() => {
-              onClose();
-              onOpenDelete(transaction);
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold text-xs transition-colors active:scale-95"
-          >
-            <Trash2 className="w-4 h-4" />
-            Delete Record
-          </button>
-
-          <div className="flex items-center gap-2">
+          {onOpenDelete ? (
             <button
               onClick={() => {
                 onClose();
-                onOpenEdit(transaction);
+                onOpenDelete(transaction);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors shadow-md shadow-indigo-600/20 active:scale-95"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold text-xs transition-colors active:scale-95"
             >
-              <Edit3 className="w-4 h-4" />
-              Edit Record
+              <Trash2 className="w-4 h-4" />
+              Delete Record
             </button>
+          ) : <div />}
+
+          <div className="flex items-center gap-2">
+            {onOpenEdit && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenEdit(transaction);
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors shadow-md shadow-indigo-600/20 active:scale-95"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit Record
+              </button>
+            )}
             <button
               onClick={onClose}
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
@@ -254,6 +262,8 @@ export function TransactionEditModal({
     }
   }, [transaction, accounts]);
 
+  if (!isOpen || !transaction) return null;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -279,8 +289,6 @@ export function TransactionEditModal({
       setLoading(false);
     }
   };
-
-  if (!isOpen || !transaction) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -500,11 +508,15 @@ export function TransactionDeleteModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  if (!isOpen || !transaction) return null;
+
+  const isInc = transaction.type === 'income';
+
   const handleDelete = async () => {
     setError('');
     setLoading(true);
     try {
-      await api.deleteTransaction(transaction?.id);
+      await api.deleteTransaction(transaction.id);
       onSuccess?.();
       onClose();
     } catch (err) {
@@ -512,10 +524,6 @@ export function TransactionDeleteModal({
       setLoading(false);
     }
   };
-
-  if (!isOpen || !transaction) return null;
-
-  const isInc = transaction.type === 'income';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">

@@ -7,7 +7,20 @@ export async function GET(req: NextRequest) {
     const auth = await authenticateRequest(req);
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    let whereClause: any = undefined;
+    if (auth.role === 'employee' && auth.staffId) {
+      const staffMember = await prisma.staff.findUnique({ where: { id: auth.staffId } });
+      const staffName = staffMember?.name || '';
+      whereClause = {
+        OR: [
+          { counselorStaffId: auth.staffId },
+          { counselorName: staffName },
+        ],
+      };
+    }
+
     const invoices = await prisma.invoice.findMany({
+      where: whereClause,
       orderBy: { id: 'desc' },
       include: { items: true },
     });

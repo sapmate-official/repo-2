@@ -23,13 +23,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    const token = signToken({ id: user.id, username: user.username });
+    const role = user.role || 'admin';
+    const token = signToken({
+      id: user.id,
+      username: user.username,
+      role,
+      staffId: user.staffId,
+    });
+
+    let employeeData = null;
+    if (user.staffId) {
+      employeeData = await prisma.staff.findUnique({
+        where: { id: user.staffId },
+      });
+    }
+
     const { passwordHash: _passwordHash, ...profile } = user;
 
     return NextResponse.json({
       token,
       profile: {
         ...profile,
+        role,
+        staff_id: user.staffId,
+        avatar: user.avatar || '',
+        employee: employeeData,
         business_name: profile.businessName,
         invoice_prefix: profile.invoicePrefix,
         api_key: profile.apiKey,
@@ -40,4 +58,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
-

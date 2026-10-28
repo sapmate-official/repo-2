@@ -2,15 +2,16 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ShieldCheck, Lock, User, Building2, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, Lock, User, Building2, Smartphone } from 'lucide-react';
+import MobileWebAppModal from './MobileWebAppModal';
 
 export default function LoginModal() {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showMobileModal, setShowMobileModal] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,14 +33,14 @@ export default function LoginModal() {
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div className="relative text-center mb-8">
+        <div className="relative text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-lg shadow-indigo-500/30 mb-4">
             <Building2 className="w-8 h-8" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
             Alkaa Business <span className="text-indigo-400">+</span>
           </h1>
-          <p className="text-slate-400 text-sm mt-1">Smart Financial & Billing Ecosystem</p>
+          <p className="text-slate-400 text-sm mt-1">Smart Financial &amp; Billing Ecosystem</p>
         </div>
 
         {error && (
@@ -51,7 +52,7 @@ export default function LoginModal() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-              Username
+              Username or Email
             </label>
             <div className="relative">
               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -60,7 +61,7 @@ export default function LoginModal() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username (e.g. admin)"
+                placeholder="Enter username or email"
                 className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
             </div>
@@ -73,27 +74,19 @@ export default function LoginModal() {
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
-                type={showPassword ? 'text' : 'password'}
+                type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-3 pl-10 pr-11 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                placeholder="Enter password"
+                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors p-1"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
             </div>
           </div>
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !username || !password}
             className="w-full mt-2 py-3.5 px-4 bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition-all transform active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
@@ -105,11 +98,28 @@ export default function LoginModal() {
               </>
             )}
           </button>
+
+          <div className="relative flex py-1 items-center">
+            <div className="flex-grow border-t border-slate-800"></div>
+            <span className="flex-shrink mx-3 text-[10px] uppercase font-bold tracking-wider text-slate-500">Or Access From Phone</span>
+            <div className="flex-grow border-t border-slate-800"></div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowMobileModal(true)}
+            className="w-full py-3 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-semibold rounded-xl text-xs flex items-center justify-center gap-2 transition-all transform active:scale-[0.98]"
+          >
+            <Smartphone className="w-4 h-4 text-emerald-400" />
+            <span>📱 Phone Web App &amp; 1-Click Login</span>
+          </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-slate-500">
-          Cloud-ready &amp; iPhone 16 Pro Max responsive
-        </div>
+        {/* Mobile Web App & QR Login Modal */}
+        <MobileWebAppModal
+          isOpen={showMobileModal}
+          onClose={() => setShowMobileModal(false)}
+        />
       </div>
     </div>
   );

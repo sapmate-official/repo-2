@@ -1,16 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from '../lib/api';
 import {
   X,
+  Plus,
   Receipt,
   User,
   Phone,
   BookOpen,
+  DollarSign,
   Gift,
+  Award,
+  Users,
+  CheckCircle2,
   Sparkles,
-  Zap
+  Zap,
+  Search,
+  ChevronDown,
+  Check
 } from 'lucide-react';
 
 export default function InvoiceCreateModal({
@@ -21,9 +29,6 @@ export default function InvoiceCreateModal({
   staff = [],
   currency = '₹'
 }) {
-  const safeAccounts = Array.isArray(accounts) ? accounts : [];
-  const safeStaff = Array.isArray(staff) ? staff : [];
-
   // Student & Course
   const [studentName, setStudentName] = useState('');
   const [studentPhone, setStudentPhone] = useState('');
@@ -33,13 +38,41 @@ export default function InvoiceCreateModal({
   const [paymentType, setPaymentType] = useState('full'); // 'full' | 'installment' | 'unpaid'
   const [amountPaidNow, setAmountPaidNow] = useState('');
   const [paymentMode, setPaymentMode] = useState('upi'); // 'cash', 'upi', 'bank', 'unpaid'
-  const [accountId, setAccountId] = useState(safeAccounts[0]?.id || '');
+  const [accountId, setAccountId] = useState(accounts[0]?.id || '');
   const [notes, setNotes] = useState('');
 
   // Incentive & Commission
   const [enableIncentive, setEnableIncentive] = useState(true);
   const [autoCalculate, setAutoCalculate] = useState(true); // Auto-calculate tier so user never has to remember!
-  const [selectedStaffId, setSelectedStaffId] = useState(safeStaff[0]?.id || '');
+  const [selectedStaffId, setSelectedStaffId] = useState(staff[0]?.id || '');
+  const [staffSearchQuery, setStaffSearchQuery] = useState('');
+  const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
+  const staffPickerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (staffPickerRef.current && !staffPickerRef.current.contains(e.target)) {
+        setIsStaffDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredStaff = useMemo(() => {
+    if (!staffSearchQuery.trim()) return staff;
+    const q = staffSearchQuery.toLowerCase().trim();
+    return staff.filter(s =>
+      (s.name || '').toLowerCase().includes(q) ||
+      (s.role || '').toLowerCase().includes(q) ||
+      (s.department || '').toLowerCase().includes(q) ||
+      (s.employee_id || '').toLowerCase().includes(q)
+    );
+  }, [staff, staffSearchQuery]);
+
+  const selectedStaff = useMemo(() => {
+    return staff.find(s => String(s.id) === String(selectedStaffId)) || staff[0];
+  }, [staff, selectedStaffId]);
   const [incentiveRule, setIncentiveRule] = useState('1st Admission Incentive (₹600)');
   const [incentiveAmount, setIncentiveAmount] = useState(600);
   const [incentiveStatus, setIncentiveStatus] = useState('due'); // 'due' or 'paid_now'
@@ -77,15 +110,14 @@ export default function InvoiceCreateModal({
     let isMounted = true;
     api.getIncentivePreview(selectedStaffId, netAmount)
       .then((data) => {
-        if (!isMounted || !data) return;
+        if (!isMounted) return;
         setAutoDetails(data);
-        const rule = data.rule_name || data.autoRule || 'Sales Incentive';
-        const amt = data.bonus_amount !== undefined ? data.bonus_amount : (data.autoIncentive || 600);
-        setIncentiveRule(rule);
-        setIncentiveAmount(amt);
+        setIncentiveRule(data.autoRule);
+        setIncentiveAmount(data.autoIncentive);
       })
       .catch(() => {
         // Fallback calculation on client if preview fails
+        const count = 0;
         if (netAmount >= 40000) {
           setIncentiveRule('High-Value Sale Commission (₹5,000)');
           setIncentiveAmount(5000);
@@ -425,9 +457,9 @@ export default function InvoiceCreateModal({
                 onChange={(e) => setAccountId(e.target.value)}
                 className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 px-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                {safeAccounts.map(acc => (
+                {accounts.map(acc => (
                   <option key={acc.id} value={acc.id}>
-                    {acc.name} ({currency}{Number(acc.balance || 0).toLocaleString()})
+                    {acc.name} ({currency}{acc.balance.toLocaleString()})
                   </option>
                 ))}
               </select>
@@ -477,17 +509,106 @@ export default function InvoiceCreateModal({
                     </button>
                   </div>
 
-                  <select
-                    value={selectedStaffId}
-                    onChange={(e) => setSelectedStaffId(e.target.value)}
-                    className="w-full bg-slate-900 border border-indigo-500/30 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {safeStaff.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.role})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative" ref={staffPickerRef}>
+                    {/* Trigger Button displaying Selected Counselor with Search Icon */}
+                    <button
+                      type="button"
+                      onClick={() => setIsStaffDropdownOpen(!isStaffDropdownOpen)}
+                      className="w-full bg-slate-900/90 hover:bg-slate-900 border border-indigo-500/30 hover:border-indigo-500/60 rounded-xl py-2 px-3 text-xs text-left text-slate-100 flex items-center justify-between transition shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <Users className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                        <span className="font-semibold truncate">
+                          {selectedStaff?.name ? `${selectedStaff.name} (${selectedStaff.role || 'Staff'})` : 'Select Counselor...'}
+                        </span>
+                        {selectedStaff?.monthly_admissions !== undefined && (
+                          <span className="text-[10px] text-slate-400 shrink-0 hidden sm:inline">
+                            — {selectedStaff.monthly_admissions || 0} sales this month
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-slate-400 shrink-0 ml-2">
+                        <Search className="w-3.5 h-3.5 text-indigo-400" />
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isStaffDropdownOpen ? 'rotate-180 text-indigo-400' : ''}`} />
+                      </div>
+                    </button>
+
+                    {/* Searchable Dropdown Popup */}
+                    {isStaffDropdownOpen && (
+                      <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-slate-900 border border-indigo-500/40 rounded-2xl shadow-2xl p-2.5 backdrop-blur-xl animate-fadeIn">
+                        {/* Search Input Bar */}
+                        <div className="relative mb-2">
+                          <Search className="w-3.5 h-3.5 text-indigo-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            autoFocus
+                            placeholder="Type to search counselor by name, role or dept..."
+                            value={staffSearchQuery}
+                            onChange={(e) => setStaffSearchQuery(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                          />
+                          {staffSearchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setStaffSearchQuery('')}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Staff List */}
+                        <div className="max-h-56 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                          {filteredStaff.length === 0 ? (
+                            <div className="py-4 text-center text-xs text-slate-500">
+                              No counselors found matching "{staffSearchQuery}"
+                            </div>
+                          ) : (
+                            filteredStaff.map((s) => {
+                              const isSelected = String(s.id) === String(selectedStaffId);
+                              return (
+                                <button
+                                  key={s.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedStaffId(s.id);
+                                    setIsStaffDropdownOpen(false);
+                                    setStaffSearchQuery('');
+                                  }}
+                                  className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition ${
+                                    isSelected
+                                      ? 'bg-indigo-600/25 border border-indigo-500/50 text-white font-bold'
+                                      : 'hover:bg-slate-800/80 text-slate-200 border border-transparent'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5 truncate">
+                                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-rose-500 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                                      {(s.name || 'S').slice(0, 2).toUpperCase()}
+                                    </div>
+                                    <div className="truncate">
+                                      <div className="font-semibold text-white truncate flex items-center gap-1.5">
+                                        <span>{s.name}</span>
+                                        <span className="text-[10px] text-indigo-300 font-normal">
+                                          ({s.role || s.job_title || 'Staff'})
+                                        </span>
+                                      </div>
+                                      <div className="text-[10px] text-slate-400">
+                                        {s.department || 'Admissions'} • {s.monthly_admissions || 0} sales this month
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {isSelected && (
+                                    <Check className="w-4 h-4 text-indigo-400 shrink-0 ml-2" />
+                                  )}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* AUTOMATIC TIER CALCULATION BADGE BANNER */}
@@ -498,15 +619,15 @@ export default function InvoiceCreateModal({
                       <div>
                         <span className="text-[11px] font-bold text-amber-300 block">
                           {autoDetails
-                            ? `Auto-Detected: Admission #${autoDetails.sale_number || autoDetails.nextSaleIndex || 1} this month`
+                            ? `Auto-Detected: Admission #${autoDetails.nextSaleIndex} this month`
                             : 'Auto-Calculating Tier...'}
                         </span>
                         <span className="text-[10px] text-slate-300">
                           {netAmount >= 40000
                             ? 'High-Value Course (≥ ₹40,000) → ₹5,000 Commission Applied!'
-                            : (autoDetails?.sale_number || autoDetails?.nextSaleIndex || 1) === 1
+                            : autoDetails?.nextSaleIndex === 1
                               ? '1st Sale: ₹600 Applied (No manual reminder needed)'
-                              : (autoDetails?.sale_number || autoDetails?.nextSaleIndex || 1) === 2
+                              : autoDetails?.nextSaleIndex === 2
                                 ? '2nd Sale: ₹700 Applied'
                                 : '3rd+ Sale: ₹800 Applied'}
                         </span>
@@ -530,7 +651,7 @@ export default function InvoiceCreateModal({
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                     {incentivePresets.map((preset, idx) => {
-                      const isSelected = (incentiveRule || '').includes(preset.label) || (preset.amount === incentiveAmount && preset.amount > 0);
+                      const isSelected = incentiveRule.includes(preset.label) || (preset.amount === incentiveAmount && preset.amount > 0);
                       return (
                         <button
                           key={idx}
@@ -585,19 +706,6 @@ export default function InvoiceCreateModal({
                 </div>
               </div>
             )}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Admission Notes / Remarks (Optional)
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. 2nd Installment due on 15th next month"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
           </div>
 
           {/* Grand Total Summary */}

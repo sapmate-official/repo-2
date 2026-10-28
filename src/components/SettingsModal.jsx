@@ -9,6 +9,10 @@ import {
   Wallet,
   Plus,
   CheckCircle2,
+  Phone,
+  Mail,
+  MapPin,
+  Coins,
   Key,
   Code2,
   Copy,
@@ -18,6 +22,7 @@ import {
   EyeOff,
   Zap,
   Play,
+  Terminal,
   AlertCircle,
   Database,
   ArrowDownCircle,
@@ -26,16 +31,29 @@ import {
   Trash2,
   AlertTriangle,
   ShieldAlert,
-  ShieldCheck,
-  Lock
+  Lock,
+  Users,
+  UserPlus,
+  Shield,
+  UserCheck,
+  BadgeCheck
 } from 'lucide-react';
 import EraseDataModal from './EraseDataModal';
 
 export default function SettingsModal({ accounts = [], onAccountUpdated, currency = '₹' }) {
-  const { profile, updateProfileData } = useAuth();
+  const { user, profile, updateProfileData } = useAuth();
+  const isAdmin = user?.role === 'admin' || profile?.role === 'admin';
 
-  const [activeTab, setActiveTab] = useState('business'); // 'business' | 'api' | 'danger'
+  const [activeTab, setActiveTab] = useState(isAdmin ? 'business' : 'profile'); // 'business' | 'api' | 'danger' | 'profile'
   const [showEraseModal, setShowEraseModal] = useState(false);
+
+  // Employee Password state
+  const [empNewPassword, setEmpNewPassword] = useState('');
+  const [empConfirmPassword, setEmpConfirmPassword] = useState('');
+  const [showEmpPw, setShowEmpPw] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   // Business Profile
   const [businessName, setBusinessName] = useState(profile?.business_name || 'Alkaa Business +');
@@ -83,62 +101,56 @@ export default function SettingsModal({ accounts = [], onAccountUpdated, currenc
   const [testFeeStudentId, setTestFeeStudentId] = useState('5');
   const [testFeeAmount, setTestFeeAmount] = useState('5000');
 
+  // Live employee test state
+  const [testEmpName, setTestEmpName] = useState('Pooja Verma');
+  const [testEmpDept, setTestEmpDept] = useState('Admissions');
+  const [testEmpJob, setTestEmpJob] = useState('Senior Admissions Counselor');
+  const [testEmpSalary, setTestEmpSalary] = useState('42000');
+  const [testEmpIncentive, setTestEmpIncentive] = useState('5% per admission');
+  const [testEmpAccess, setTestEmpAccess] = useState('employee');
+  const [testEmpUsername, setTestEmpUsername] = useState('pooja.v');
+  const [testEmpPassword, setTestEmpPassword] = useState('welcome123');
+
   const [testLoading, setTestLoading] = useState(false);
   const [testResponse, setTestResponse] = useState(null);
   const [testError, setTestError] = useState(null);
 
-  // Security / Change Password state
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
-  const [passwordSuccess, setPasswordSuccess] = useState('');
+  useEffect(() => {
+    if (isAdmin) {
+      fetchApiKey();
+    }
+    if (profile?.employee?.name || user?.username) {
+      setTestCounselorName(profile?.employee?.name || user?.username);
+    }
+  }, [profile, user, isAdmin]);
 
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
+  const handleUpdateEmployeePassword = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!empNewPassword || empNewPassword.length < 4) {
+      setPasswordError('Password must be at least 4 characters long');
+      return;
+    }
+    if (empNewPassword !== empConfirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+    setUpdatingPassword(true);
     setPasswordError('');
-    setPasswordSuccess('');
-
-    if (!currentPassword) {
-      setPasswordError('Please enter your current password');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setPasswordError('New password must be at least 6 characters long');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setPasswordError('New password and confirmation do not match');
-      return;
-    }
-
-    setPasswordLoading(true);
+    setPasswordSuccess(false);
     try {
-      const res = await api.changePassword({
-        currentPassword,
-        newPassword,
-        confirmPassword,
-      });
-      setPasswordSuccess(res.message || 'Password updated successfully!');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      const staffId = user?.staff_id || profile?.staff_id || profile?.employee?.id;
+      if (!staffId) throw new Error('Staff ID not linked to your user account');
+      await api.resetEmployeePassword(staffId, empNewPassword);
+      setPasswordSuccess(true);
+      setEmpNewPassword('');
+      setEmpConfirmPassword('');
+      setTimeout(() => setPasswordSuccess(false), 4000);
     } catch (err) {
       setPasswordError(err.message || 'Failed to update password');
     } finally {
-      setPasswordLoading(false);
+      setUpdatingPassword(false);
     }
   };
-
-  useEffect(() => {
-    fetchApiKey();
-  }, []);
 
   const fetchApiKey = async () => {
     setLoadingKey(true);
@@ -295,6 +307,31 @@ export default function SettingsModal({ accounts = [], onAccountUpdated, currenc
           headers: {
             'x-api-key': apiKey
           }
+        });
+      } else if (testAction === 'get_employees') {
+        res = await fetch(`${origin}/api/v1/employees`, {
+          method: 'GET',
+          headers: {
+            'x-api-key': apiKey
+          }
+        });
+      } else if (testAction === 'post_employee') {
+        res = await fetch(`${origin}/api/v1/employees/upsert`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey
+          },
+          body: JSON.stringify({
+            name: testEmpName.trim(),
+            department: testEmpDept,
+            job_title: testEmpJob.trim(),
+            base_salary: parseFloat(testEmpSalary) || 0,
+            incentive_rule: testEmpIncentive.trim(),
+            system_access: testEmpAccess,
+            username: testEmpUsername.trim(),
+            password: testEmpPassword.trim() || undefined
+          })
         });
       }
 
@@ -487,8 +524,7 @@ headers = {
 response = requests.get(url, headers=headers)
 print(response.json())`
       };
-    } else {
-      // get_students
+    } else if (selectedEndpoint === 'get_students') {
       return {
         curl: `curl -X GET "${origin}/api/v1/students?limit=20" \\
   -H "x-api-key: ${effectiveKey}"`,
@@ -515,6 +551,106 @@ headers = {
 response = requests.get(url, headers=headers)
 print(response.json())`
       };
+    } else if (selectedEndpoint === 'get_employees') {
+      return {
+        curl: `# GET: Fetch Workforce Directory & Salaries Roster
+curl -X GET "${origin}/api/v1/employees?department=Admissions" \\
+  -H "x-api-key: ${effectiveKey}"`,
+        javascript: `// GET: Fetch Employee Directory
+const response = await fetch('${origin}/api/v1/employees?department=Admissions', {
+  method: 'GET',
+  headers: {
+    'x-api-key': '${effectiveKey}'
+  }
+});
+
+const { employees, totalCount } = await response.json();
+console.log('Total Workforce:', totalCount);
+employees.forEach(emp => {
+  console.log(emp.employee_id, emp.name, emp.job_title, 'Monthly Salary: ₹' + (emp.monthly_salary || emp.base_salary), 'Incentive:', emp.incentive_rule);
+});`,
+        python: `# GET: Fetch Employee Directory via Python requests
+import requests
+
+url = "${origin}/api/v1/employees"
+headers = {
+    "x-api-key": "${effectiveKey}"
+}
+params = { "department": "Admissions" }
+
+response = requests.get(url, headers=headers, params=params)
+data = response.json()
+print("Total Employees:", data.get("totalCount"))
+print(data.get("employees"))`
+      };
+    } else {
+      // post_employee
+      return {
+        curl: `# POST: Upsert (Create or Update) Employee Record & Permissions
+curl -X POST "${origin}/api/v1/employees/upsert" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: ${effectiveKey}" \\
+  -d '{
+    "name": "Pooja Verma",
+    "department": "Admissions",
+    "job_title": "Senior Admissions Counselor",
+    "location": "New Delhi, India",
+    "employment_type": "Full-time",
+    "base_salary": 42000,
+    "incentive_rule": "5% per admission",
+    "system_access": "employee",
+    "username": "pooja.v",
+    "password": "welcome123"
+  }'`,
+        javascript: `// POST: Upsert Employee (Create new or update existing)
+const response = await fetch('${origin}/api/v1/employees/upsert', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': '${effectiveKey}'
+  },
+  body: JSON.stringify({
+    name: 'Pooja Verma',
+    department: 'Admissions',
+    job_title: 'Senior Admissions Counselor',
+    location: 'New Delhi, India',
+    employment_type: 'Full-time',
+    base_salary: 42000,
+    incentive_rule: '5% per admission',
+    system_access: 'employee',
+    username: 'pooja.v',
+    password: 'welcome123'
+  })
+});
+
+const data = await response.json();
+console.log('Employee Saved:', data.employee?.name, 'ID:', data.employee?.employee_id);
+console.log('Monthly Salary:', data.employee?.monthly_salary);
+console.log('System Access:', data.employee?.system_access);`,
+        python: `# POST: Upsert Employee via Python requests
+import requests
+
+url = "${origin}/api/v1/employees/upsert"
+headers = {
+    "Content-Type": "application/json",
+    "x-api-key": "${effectiveKey}"
+}
+payload = {
+    "name": "Pooja Verma",
+    "department": "Admissions",
+    "job_title": "Senior Admissions Counselor",
+    "location": "New Delhi, India",
+    "employment_type": "Full-time",
+    "base_salary": 42000,
+    "incentive_rule": "5% per admission",
+    "system_access": "employee",
+    "username": "pooja.v",
+    "password": "welcome123"
+}
+
+response = requests.post(url, json=payload, headers=headers)
+print(response.json())`
+      };
     }
   };
 
@@ -537,75 +673,74 @@ print(response.json())`
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                System Settings &amp; API Integration
+                {isAdmin ? 'System Settings & API Integration' : 'My Profile & Security'}
               </h2>
               <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-                Manage business profile, payment accounts, and Developer REST API (Full/Installment Admissions &amp; Fees)
+                {isAdmin
+                  ? 'Manage business profile, payment accounts, and Developer REST API (Full/Installment Admissions & Fees)'
+                  : 'View your staff credentials, employee profile information, and update your login password'}
               </p>
             </div>
           </div>
 
           {/* Navigation Pill Switcher */}
           <div className="flex items-center gap-1.5 p-1.5 bg-slate-950/80 rounded-2xl border border-slate-800/80 self-start sm:self-auto">
-            <button
-              onClick={() => setActiveTab('business')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'business'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Business &amp; Accounts</span>
-            </button>
+            {isAdmin ? (
+              <>
+                <button
+                  onClick={() => setActiveTab('business')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    activeTab === 'business'
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Business &amp; Accounts</span>
+                </button>
 
-            <button
-              onClick={() => setActiveTab('security')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'security'
-                  ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Security &amp; Password</span>
-            </button>
+                <button
+                  onClick={() => setActiveTab('api')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    activeTab === 'api'
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Zap className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Developer API</span>
+                  <span className="px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    POST &amp; GET
+                  </span>
+                </button>
 
-            <button
-              onClick={() => setActiveTab('api')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'api'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Zap className="w-3.5 h-3.5 text-emerald-300" />
-              <span>Developer API</span>
-              <span className="px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                POST &amp; GET
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('danger')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'danger'
-                  ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
-                  : 'text-slate-400 hover:text-rose-400'
-              }`}
-            >
-              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-              <span>Danger Zone</span>
-              <span className="px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                Erase Data
-              </span>
-            </button>
+                <button
+                  onClick={() => setActiveTab('danger')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    activeTab === 'danger'
+                      ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
+                      : 'text-slate-400 hover:text-rose-400'
+                  }`}
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Danger Zone</span>
+                  <span className="px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                    Erase Data
+                  </span>
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-lg shadow-indigo-600/30">
+                <Shield className="w-3.5 h-3.5 text-indigo-200" />
+                <span>My Profile &amp; Security</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* TAB 1: BUSINESS & ACCOUNTS */}
-      {activeTab === 'business' && (
+      {/* TAB 1: BUSINESS & ACCOUNTS (ADMIN ONLY) */}
+      {activeTab === 'business' && isAdmin && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
           {/* Business Profile Form */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl">
@@ -890,190 +1025,8 @@ print(response.json())`
         </div>
       )}
 
-      {/* TAB: SECURITY & PASSWORD */}
-      {activeTab === 'security' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
-          {/* Change Password Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl">
-            <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-800">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center border border-amber-500/30">
-                <Lock className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                  Change Admin Password
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Update your login credentials securely
-                </p>
-              </div>
-            </div>
-
-            {passwordSuccess && (
-              <div className="mb-4 p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-                <span>{passwordSuccess}</span>
-              </div>
-            )}
-
-            {passwordError && (
-              <div className="mb-4 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{passwordError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handlePasswordChange} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Current Password *
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <input
-                    type={showCurrentPassword ? 'text' : 'password'}
-                    required
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password"
-                    className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 pl-10 pr-10 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1"
-                  >
-                    {showCurrentPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-                  New Password * (Min. 6 characters)
-                </label>
-                <div className="relative">
-                  <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <input
-                    type={showNewPassword ? 'text' : 'password'}
-                    required
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new strong password"
-                    className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 pl-10 pr-10 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1"
-                  >
-                    {showNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Confirm New Password *
-                </label>
-                <div className="relative">
-                  <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Re-type new password"
-                    className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 pl-10 pr-10 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-                {newPassword && confirmPassword && (
-                  <p className={`text-[11px] mt-1.5 font-medium ${newPassword === confirmPassword ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {newPassword === confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={passwordLoading}
-                className="w-full mt-3 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-600/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-              >
-                {passwordLoading ? (
-                  <div className="w-4 h-4 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Update Password</span>
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-
-          {/* Security Overview & Architecture Card */}
-          <div className="space-y-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl">
-              <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-800">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                    Authentication &amp; Security Specs
-                  </h3>
-                  <p className="text-xs text-slate-400">Current system encryption parameters</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400 font-medium">Logged-in Administrator</span>
-                  <span className="text-xs font-mono font-bold text-indigo-300">
-                    {profile?.username || 'admin'}
-                  </span>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400 font-medium">Password Encryption</span>
-                  <span className="text-xs font-bold text-emerald-400">
-                    bcrypt (Blowfish 10 Salt Rounds)
-                  </span>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400 font-medium">Session Token</span>
-                  <span className="text-xs font-bold text-slate-200">
-                    HMAC-SHA256 JWT Bearer
-                  </span>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400 font-medium">Database Layer</span>
-                  <span className="text-xs font-bold text-cyan-400">
-                    Neon Serverless Postgres (SSL Enabled)
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-5 p-3.5 rounded-2xl bg-slate-950/40 border border-slate-800/80 text-[11px] text-slate-400 leading-relaxed">
-                <p className="font-semibold text-slate-300 mb-1">Security Best Practice:</p>
-                Default credentials (<code className="text-amber-400">admin / admin123</code>) should be changed immediately after initial setup to safeguard financial balances, student records, and salary payouts.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 2: DEVELOPER API (POST & GET) */}
-      {activeTab === 'api' && (
+      {/* TAB 2: DEVELOPER API (POST & GET) (ADMIN ONLY) */}
+      {activeTab === 'api' && isAdmin && (
         <div className="space-y-6 animate-fadeIn">
           {/* API Key Box */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl">
@@ -1148,7 +1101,7 @@ print(response.json())`
             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
               Select REST API Endpoint to View Code &amp; Test:
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
               <button
                 onClick={() => { setSelectedEndpoint('post_sales'); setTestAction('post'); }}
                 className={`flex items-center gap-2 p-3 rounded-2xl text-left border transition ${
@@ -1182,6 +1135,24 @@ print(response.json())`
                     <span className="text-xs font-bold">Pay Installment</span>
                   </div>
                   <div className="text-[10px] text-slate-400 font-mono mt-0.5">/api/v1/fees</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => { setSelectedEndpoint('post_employee'); setTestAction('post_employee'); }}
+                className={`flex items-center gap-2 p-3 rounded-2xl text-left border transition ${
+                  selectedEndpoint === 'post_employee'
+                    ? 'bg-indigo-600/20 border-indigo-500 text-white'
+                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                }`}
+              >
+                <UserPlus className="w-4 h-4 text-rose-400 shrink-0" />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-black uppercase px-1 rounded bg-rose-500/20 text-rose-400">POST</span>
+                    <span className="text-xs font-bold">Upsert Employee</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-mono mt-0.5">/api/v1/employees</div>
                 </div>
               </button>
 
@@ -1238,6 +1209,24 @@ print(response.json())`
                   <div className="text-[10px] text-slate-400 font-mono mt-0.5">/api/v1/students</div>
                 </div>
               </button>
+
+              <button
+                onClick={() => { setSelectedEndpoint('get_employees'); setTestAction('get_employees'); }}
+                className={`flex items-center gap-2 p-3 rounded-2xl text-left border transition ${
+                  selectedEndpoint === 'get_employees'
+                    ? 'bg-indigo-600/20 border-indigo-500 text-white'
+                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                }`}
+              >
+                <Users className="w-4 h-4 text-teal-400 shrink-0" />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-black uppercase px-1 rounded bg-teal-500/20 text-teal-400">GET</span>
+                    <span className="text-xs font-bold">Employees</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-mono mt-0.5">/api/v1/employees</div>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -1252,9 +1241,11 @@ print(response.json())`
                     <h3 className="text-base font-bold text-white">
                       {selectedEndpoint === 'post_sales' && 'POST: Create Admission (Full or Installment)'}
                       {selectedEndpoint === 'post_fee' && 'POST: Pay Leftover Fee Installment'}
+                      {selectedEndpoint === 'post_employee' && 'POST: Upsert Employee & System Permissions'}
                       {selectedEndpoint === 'get_sales' && 'GET: Fetch All Sales & Bills'}
                       {selectedEndpoint === 'get_sale_single' && 'GET: Fetch Single Admission Bill'}
                       {selectedEndpoint === 'get_students' && 'GET: Fetch Enrolled Students'}
+                      {selectedEndpoint === 'get_employees' && 'GET: Fetch Workforce Directory'}
                     </h3>
                   </div>
 
@@ -1286,9 +1277,11 @@ print(response.json())`
                     <span className="text-slate-300">
                       {selectedEndpoint === 'post_sales' && '/api/v1/sales'}
                       {selectedEndpoint === 'post_fee' && '/api/v1/fees'}
+                      {selectedEndpoint === 'post_employee' && '/api/v1/employees/upsert'}
                       {selectedEndpoint === 'get_sales' && '/api/v1/sales'}
                       {selectedEndpoint === 'get_sale_single' && '/api/v1/sales/:id'}
                       {selectedEndpoint === 'get_students' && '/api/v1/students'}
+                      {selectedEndpoint === 'get_employees' && '/api/v1/employees'}
                     </span>
                   </div>
                   <button
@@ -1320,6 +1313,10 @@ print(response.json())`
                 <div className="flex items-center gap-2 text-slate-400">
                   <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
                   <span><strong>GET:</strong> Query sales, bills, and students with real-time fee balances and counselor incentive rules.</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-400">
+                  <CheckCircle2 className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span><strong>Workforce &amp; Employee API:</strong> Query <code className="text-white font-mono">/api/v1/employees</code> and upsert staff salaries, incentives, and portal credentials with <code className="text-white font-mono">/api/v1/employees/upsert</code>.</span>
                 </div>
               </div>
             </div>
@@ -1354,6 +1351,14 @@ print(response.json())`
                     POST Fee
                   </button>
                   <button
+                    onClick={() => setTestAction('post_employee')}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition ${
+                      testAction === 'post_employee' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    POST Employee
+                  </button>
+                  <button
                     onClick={() => setTestAction('get_sales')}
                     className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition ${
                       testAction === 'get_sales' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-white'
@@ -1368,6 +1373,14 @@ print(response.json())`
                     }`}
                   >
                     GET Students
+                  </button>
+                  <button
+                    onClick={() => setTestAction('get_employees')}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition ${
+                      testAction === 'get_employees' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    GET Employees
                   </button>
                 </div>
               </div>
@@ -1516,10 +1529,149 @@ print(response.json())`
                 </form>
               )}
 
-              {(testAction === 'get_sales' || testAction === 'get_students') && (
+              {testAction === 'post_employee' && (
+                <form onSubmit={handleRunApiTest} className="space-y-3">
+                  <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-xs text-rose-300">
+                    Upsert employee into workforce directory with salary, role, incentive rules, and system credentials.
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                        Employee Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={testEmpName}
+                        onChange={(e) => setTestEmpName(e.target.value)}
+                        placeholder="e.g. Pooja Verma"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-slate-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                        Department *
+                      </label>
+                      <select
+                        value={testEmpDept}
+                        onChange={(e) => setTestEmpDept(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-slate-100"
+                      >
+                        <option value="Admissions">Admissions</option>
+                        <option value="Sales">Sales</option>
+                        <option value="Engineering">Engineering</option>
+                        <option value="Design">Design</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Operations">Operations</option>
+                        <option value="Human Resources">Human Resources</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                        Job Title *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={testEmpJob}
+                        onChange={(e) => setTestEmpJob(e.target.value)}
+                        placeholder="e.g. Senior Admissions Counselor"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-slate-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                        Monthly Salary ({currency}) *
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        value={testEmpSalary}
+                        onChange={(e) => setTestEmpSalary(e.target.value)}
+                        placeholder="e.g. 42000"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-emerald-400 font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                        Incentive Formula / Rule
+                      </label>
+                      <input
+                        type="text"
+                        value={testEmpIncentive}
+                        onChange={(e) => setTestEmpIncentive(e.target.value)}
+                        placeholder="e.g. 5% per admission"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-slate-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                        System Access Role
+                      </label>
+                      <select
+                        value={testEmpAccess}
+                        onChange={(e) => setTestEmpAccess(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-slate-100"
+                      >
+                        <option value="employee">Employee Portal</option>
+                        <option value="admin">Administrator (Full Access)</option>
+                        <option value="none">None (Staff Record Only)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {testEmpAccess !== 'none' && (
+                    <div className="grid grid-cols-2 gap-3 p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-indigo-300 mb-1">
+                          Login Username
+                        </label>
+                        <input
+                          type="text"
+                          value={testEmpUsername}
+                          onChange={(e) => setTestEmpUsername(e.target.value)}
+                          placeholder="e.g. pooja.v"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg py-1 px-2.5 text-xs text-slate-100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-indigo-300 mb-1">
+                          Password
+                        </label>
+                        <input
+                          type="password"
+                          value={testEmpPassword}
+                          onChange={(e) => setTestEmpPassword(e.target.value)}
+                          placeholder="min 4 chars"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg py-1 px-2.5 text-xs text-slate-100"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={testLoading}
+                    className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2"
+                  >
+                    <Play className={`w-3.5 h-3.5 ${testLoading ? 'animate-spin' : ''}`} />
+                    <span>{testLoading ? 'Upserting Employee...' : 'Send POST /api/v1/employees/upsert'}</span>
+                  </button>
+                </form>
+              )}
+
+              {(testAction === 'get_sales' || testAction === 'get_students' || testAction === 'get_employees') && (
                 <div className="space-y-3">
                   <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-300">
-                    Will send an authenticated <code className="text-white font-mono font-bold">{testAction === 'get_sales' ? 'GET /api/v1/sales' : 'GET /api/v1/students'}</code> request using your live API key.
+                    Will send an authenticated <code className="text-white font-mono font-bold">
+                      {testAction === 'get_sales' ? 'GET /api/v1/sales' : testAction === 'get_students' ? 'GET /api/v1/students' : 'GET /api/v1/employees'}
+                    </code> request using your live API key.
                   </div>
                   <button
                     onClick={handleRunApiTest}
@@ -1527,12 +1679,14 @@ print(response.json())`
                     className={`w-full py-2.5 rounded-xl text-white text-xs font-bold transition shadow-lg flex items-center justify-center gap-2 ${
                       testAction === 'get_sales'
                         ? 'bg-sky-600 hover:bg-sky-500 shadow-sky-600/30'
-                        : 'bg-purple-600 hover:bg-purple-500 shadow-purple-600/30'
+                        : testAction === 'get_students'
+                        ? 'bg-purple-600 hover:bg-purple-500 shadow-purple-600/30'
+                        : 'bg-teal-600 hover:bg-teal-500 shadow-teal-600/30'
                     }`}
                   >
                     <Play className={`w-3.5 h-3.5 ${testLoading ? 'animate-spin' : ''}`} />
                     <span>
-                      {testLoading ? 'Fetching from API...' : testAction === 'get_sales' ? 'Execute GET /api/v1/sales' : 'Execute GET /api/v1/students'}
+                      {testLoading ? 'Fetching from API...' : testAction === 'get_sales' ? 'Execute GET /api/v1/sales' : testAction === 'get_students' ? 'Execute GET /api/v1/students' : 'Execute GET /api/v1/employees'}
                     </span>
                   </button>
                 </div>
@@ -1571,8 +1725,8 @@ print(response.json())`
         </div>
       )}
 
-      {/* TAB 3: DANGER ZONE (SYSTEM RESET & ERASE DATA) */}
-      {activeTab === 'danger' && (
+      {/* TAB 3: DANGER ZONE (SYSTEM RESET & ERASE DATA) (ADMIN ONLY) */}
+      {activeTab === 'danger' && isAdmin && (
         <div className="space-y-6 animate-fadeIn">
           <div className="bg-slate-900 border-2 border-rose-600/50 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-rose-950/40">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-rose-900/40">
@@ -1649,6 +1803,141 @@ print(response.json())`
                 Proceed with Erase →
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: EMPLOYEE PROFILE & SECURITY (EMPLOYEE ONLY - NO API ACCESS) */}
+      {!isAdmin && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Identity & Department Banner */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-slate-800">
+              <div className="flex items-center gap-5">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-600 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30 border-2 border-indigo-400/30">
+                  {profile?.employee?.name ? profile.employee.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : user?.username?.[0]?.toUpperCase() || 'E'}
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                      {profile?.employee?.name || user?.username || 'Employee'}
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Employee Portal Active
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                    {profile?.employee?.job_title || 'Staff Member'} • <span className="text-indigo-400 font-semibold">{profile?.employee?.department || 'Admissions'}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Employee ID Tag */}
+              <div className="px-4 py-2 rounded-2xl bg-slate-950 border border-slate-800 flex items-center gap-3">
+                <div className="text-right">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Staff ID</span>
+                  <span className="text-sm font-mono font-bold text-white">
+                    {profile?.employee?.employee_id || (user?.staff_id ? `EMP-${user.staff_id}` : 'EMP-STAFF')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Profile Detail Badges */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Login Username</span>
+                <span className="text-sm font-semibold text-white font-mono">{user?.username}</span>
+              </div>
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Role Permission</span>
+                <span className="text-sm font-semibold text-indigo-400 capitalize">{user?.role || 'employee'}</span>
+              </div>
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Email</span>
+                <span className="text-sm font-semibold text-slate-200 truncate block">
+                  {profile?.employee?.email || user?.email || 'None registered'}
+                </span>
+              </div>
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Presence</span>
+                <span className="text-sm font-semibold text-slate-200">
+                  {profile?.employee?.presence || 'Present'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Password Security Form Card */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl max-w-xl">
+            <div className="flex items-center gap-3 pb-5 border-b border-slate-800">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-base font-bold text-white">Update Portal Password</h4>
+                <p className="text-xs text-slate-400">Keep your personal account secure by choosing a new password</p>
+              </div>
+            </div>
+
+            {passwordSuccess && (
+              <div className="mt-4 p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2.5">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>Your login password has been updated successfully!</span>
+              </div>
+            )}
+
+            {passwordError && (
+              <div className="mt-4 p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{passwordError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateEmployeePassword} className="mt-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showEmpPw ? 'text' : 'password'}
+                    value={empNewPassword}
+                    onChange={(e) => setEmpNewPassword(e.target.value)}
+                    placeholder="Enter new password (min. 4 characters)"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEmpPw(!showEmpPw)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                  >
+                    {showEmpPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Confirm New Password</label>
+                <input
+                  type={showEmpPw ? 'text' : 'password'}
+                  value={empConfirmPassword}
+                  onChange={(e) => setEmpConfirmPassword(e.target.value)}
+                  placeholder="Repeat new password"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={updatingPassword}
+                className="w-full mt-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>{updatingPassword ? 'Updating Password...' : 'Update Password'}</span>
+              </button>
+            </form>
           </div>
         </div>
       )}

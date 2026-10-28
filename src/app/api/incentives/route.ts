@@ -7,7 +7,13 @@ export async function GET(req: NextRequest) {
     const auth = await authenticateRequest(req);
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const whereClause: any = {};
+    if (auth.role === 'employee' && auth.staffId) {
+      whereClause.staffId = auth.staffId;
+    }
+
     const incentives = await prisma.staffIncentive.findMany({
+      where: whereClause,
       orderBy: { id: 'desc' },
     });
 

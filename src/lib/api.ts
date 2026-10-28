@@ -99,6 +99,20 @@ export const api = {
   getApiKey: () => apiRequest('/v1/api-key'),
   regenerateApiKey: () => apiRequest('/v1/api-key/regenerate', { method: 'POST' }),
 
+  // Employee Directory & RBAC
+  getEmployees: (params: Record<string, any> = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return apiRequest(`/employees${q ? `?${q}` : ''}`);
+  },
+  getEmployee: (id: number | string) => apiRequest(`/employees/${id}`),
+  upsertEmployee: (data: any) => apiRequest('/employees/upsert', { method: 'POST', body: JSON.stringify(data) }),
+  resetEmployeePassword: (id: number | string, newPassword: string) => apiRequest(`/employees/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ new_password: newPassword }) }),
+  deleteEmployee: (id: number | string) => apiRequest(`/employees/${id}`, { method: 'DELETE' }),
+
+  // Mobile Web App & Connect
+  getMobileConnectInfo: () => apiRequest('/system/mobile-connect'),
+  getMobileToken: (payload: any) => apiRequest('/system/mobile-token', { method: 'POST', body: JSON.stringify(payload) }),
+
   // Danger Zone
   eraseData: (data: any) => apiRequest('/system/erase-data', { method: 'POST', body: JSON.stringify(data) }),
 };

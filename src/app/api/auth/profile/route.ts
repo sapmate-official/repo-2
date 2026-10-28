@@ -12,6 +12,9 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         username: true,
+        role: true,
+        staffId: true,
+        avatar: true,
         businessName: true,
         tagline: true,
         phone: true,
@@ -26,8 +29,19 @@ export async function GET(req: NextRequest) {
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
+    let employeeData = null;
+    if (user.staffId) {
+      employeeData = await prisma.staff.findUnique({
+        where: { id: user.staffId },
+      });
+    }
+
     return NextResponse.json({
       ...user,
+      role: user.role || 'admin',
+      staff_id: user.staffId,
+      avatar: user.avatar || '',
+      employee: employeeData,
       business_name: user.businessName,
       invoice_prefix: user.invoicePrefix,
       api_key: user.apiKey,
@@ -43,7 +57,7 @@ export async function PUT(req: NextRequest) {
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { business_name, tagline, phone, email, address, currency, gstin, invoice_prefix } = body;
+    const { business_name, tagline, phone, email, address, currency, gstin, invoice_prefix, avatar } = body;
 
     const user = await prisma.user.update({
       where: { id: auth.id },
@@ -56,11 +70,23 @@ export async function PUT(req: NextRequest) {
         currency: currency !== undefined ? currency : undefined,
         gstin: gstin !== undefined ? gstin : undefined,
         invoicePrefix: invoice_prefix !== undefined ? invoice_prefix : undefined,
+        avatar: avatar !== undefined ? avatar : undefined,
       },
     });
 
+    let employeeData = null;
+    if (user.staffId) {
+      employeeData = await prisma.staff.findUnique({
+        where: { id: user.staffId },
+      });
+    }
+
     return NextResponse.json({
       ...user,
+      role: user.role || 'admin',
+      staff_id: user.staffId,
+      avatar: user.avatar || '',
+      employee: employeeData,
       business_name: user.businessName,
       invoice_prefix: user.invoicePrefix,
       api_key: user.apiKey,
@@ -69,4 +95,3 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
-

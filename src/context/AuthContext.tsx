@@ -20,12 +20,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getAuthToken();
+    // 1-Click Instant Login for Phone Web App (via scanned QR code or shared link)
+    let quickToken: string | null = null;
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        quickToken = params.get('auth') || params.get('token') || params.get('mobile_token');
+        if (quickToken) {
+          setAuthToken(quickToken);
+          const cleanUrl = window.location.pathname + window.location.hash;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not parse mobile auth params:', e);
+    }
+
+    const token = quickToken || getAuthToken();
     if (token) {
       api.getProfile()
         .then((prof: any) => {
           setProfile(prof);
-          setUser({ username: prof.username, id: prof.id });
+          setUser({
+            username: prof.username,
+            id: prof.id,
+            role: prof.role || 'admin',
+            staff_id: prof.staff_id || null,
+            employee: prof.employee || null,
+          });
         })
         .catch(() => {
           setAuthToken(null);
@@ -41,8 +63,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (username: string, password: string) => {
     const res = await api.login(username, password);
     setAuthToken(res.token);
-    setUser({ username: res.profile.username, id: res.profile.id });
-    setProfile(res.profile);
+    const p = res.profile;
+    setUser({
+      username: p.username,
+      id: p.id,
+      role: p.role || 'admin',
+      staff_id: p.staff_id || null,
+      employee: p.employee || null,
+    });
+    setProfile(p);
     return res;
   };
 
@@ -55,6 +84,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateProfileData = async (newProfile: any) => {
     const updated = await api.updateProfile(newProfile);
     setProfile(updated);
+    if (user) {
+      setUser((prev: any) => ({
+        ...prev,
+        ...updated,
+      }));
+    }
     return updated;
   };
 
@@ -72,4 +107,3 @@ export function useAuth() {
   }
   return ctx;
 }
-

@@ -1,16 +1,22 @@
 "use client";
 
+import React from 'react';
+import { useAuth } from '../context/AuthContext';
 import {
-    FileSpreadsheet,
-    GraduationCap,
-    Receipt,
-    TrendingDown,
-    Users,
-    X
+  X,
+  Receipt,
+  GraduationCap,
+  Users,
+  TrendingDown,
+  FileSpreadsheet,
+  WalletCards,
+  Smartphone
 } from 'lucide-react';
 
 export default function QuickActionModal({ isOpen, onClose, onSelectAction }) {
+  const { user, profile } = useAuth();
   if (!isOpen) return null;
+  const isAdmin = user?.role === 'admin' || profile?.role === 'admin';
 
   const actions = [
     {
@@ -29,30 +35,32 @@ export default function QuickActionModal({ isOpen, onClose, onSelectAction }) {
       color: 'from-blue-600 to-cyan-600',
       badge: 'Fee'
     },
-    {
-      id: 'pay_salary',
-      title: 'Pay Staff Salary or Incentive',
-      desc: 'Disburse monthly salary or commission to counselors',
-      icon: Users,
-      color: 'from-amber-500 to-orange-600',
-      badge: 'Payroll'
-    },
-    {
-      id: 'add_expense',
-      title: 'Record Expense',
-      desc: 'Rent, electricity bills, supplies, marketing, or general spend',
-      icon: TrendingDown,
-      color: 'from-rose-500 to-pink-600',
-      badge: 'Expense'
-    },
-    {
-      id: 'excel_migration',
-      title: 'Import Previous Excel',
-      desc: 'Migrate past transactions or ledger records from .xlsx / .csv',
-      icon: FileSpreadsheet,
-      color: 'from-purple-500 to-indigo-600',
-      badge: 'Migration'
-    }
+    ...(isAdmin ? [
+      {
+        id: 'pay_salary',
+        title: 'Pay Staff Salary or Incentive',
+        desc: 'Disburse monthly salary or commission to counselors',
+        icon: Users,
+        color: 'from-amber-500 to-orange-600',
+        badge: 'Payroll'
+      },
+      {
+        id: 'add_expense',
+        title: 'Record Expense',
+        desc: 'Rent, electricity bills, supplies, marketing, or general spend',
+        icon: TrendingDown,
+        color: 'from-rose-500 to-pink-600',
+        badge: 'Expense'
+      },
+      {
+        id: 'excel_migration',
+        title: 'Import Previous Excel',
+        desc: 'Migrate past transactions or ledger records from .xlsx / .csv',
+        icon: FileSpreadsheet,
+        color: 'from-purple-500 to-indigo-600',
+        badge: 'Migration'
+      }
+    ] : [])
   ];
 
   return (

@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import {
   GraduationCap,
   Search,
   Plus,
   Phone,
+  BookOpen,
   DollarSign,
   AlertCircle,
   CheckCircle2,
@@ -14,33 +16,34 @@ import {
 
 export default function StudentsList({
   students = [],
-  onOpenAddStudent = () => {},
-  onOpenPayFee = (_studentId = null) => {},
+  onOpenAddStudent,
+  onOpenPayFee,
   currency = '₹'
 }) {
+  const { user, profile } = useAuth();
+  const isAdmin = user?.role === 'admin' || profile?.role === 'admin';
+
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState('due'); // 'due' | 'paid' | 'all'
 
-  const safeStudents = Array.isArray(students) ? students : [];
-
-  const dueStudents = safeStudents.filter(st => Number(st?.due_amount || 0) > 0);
-  const paidStudents = safeStudents.filter(st => Number(st?.due_amount || 0) <= 0);
+  const dueStudents = students.filter(st => Number(st.due_amount || 0) > 0);
+  const paidStudents = students.filter(st => Number(st.due_amount || 0) <= 0);
 
   const baseList = filterMode === 'due'
     ? dueStudents
-    : (filterMode === 'paid' ? paidStudents : safeStudents);
+    : (filterMode === 'paid' ? paidStudents : students);
 
   const filtered = baseList.filter(st => {
-    const q = (search || '').toLowerCase();
+    const q = search.toLowerCase();
     return (
-      (st?.name || '').toLowerCase().includes(q) ||
-      (st?.course_or_details && String(st.course_or_details).toLowerCase().includes(q)) ||
-      (st?.phone && String(st.phone).includes(q))
+      st.name.toLowerCase().includes(q) ||
+      (st.course_or_details && st.course_or_details.toLowerCase().includes(q)) ||
+      (st.phone && st.phone.includes(q))
     );
   });
 
-  const totalFeesAgreed = safeStudents.reduce((acc, curr) => acc + Number(curr?.total_fee || 0), 0);
-  const totalFeesCollected = safeStudents.reduce((acc, curr) => acc + Number(curr?.paid_amount || 0), 0);
+  const totalFeesAgreed = students.reduce((acc, curr) => acc + (curr.total_fee || 0), 0);
+  const totalFeesCollected = students.reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
   const totalDuesPending = Math.max(0, totalFeesAgreed - totalFeesCollected);
 
   return (
@@ -62,22 +65,17 @@ export default function StudentsList({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-stretch sm:self-auto">
-            <button
-              onClick={() => onOpenAddStudent()}
-              className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs transition-all active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Enroll Student</span>
-            </button>
-            <button
-              onClick={() => onOpenPayFee()}
-              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all active:scale-95"
-            >
-              <DollarSign className="w-4 h-4" />
-              <span>Collect Fee Installment</span>
-            </button>
-          </div>
+          {isAdmin && (
+            <div className="self-stretch sm:self-auto">
+              <button
+                onClick={() => onOpenPayFee()}
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all active:scale-95"
+              >
+                <DollarSign className="w-4 h-4" />
+                <span>Collect Fee Installment</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Stats Row */}
@@ -270,13 +268,20 @@ export default function StudentsList({
 
                   <div className="pt-2 flex justify-end items-center">
                     {hasDue ? (
-                      <button
-                        onClick={() => onOpenPayFee(st.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-xs shadow-md shadow-rose-600/20 transition-all active:scale-95"
-                      >
-                        <Receipt className="w-3.5 h-3.5" />
-                        <span>Collect Installment</span>
-                      </button>
+                      isAdmin ? (
+                        <button
+                          onClick={() => onOpenPayFee(st.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-xs shadow-md shadow-rose-600/20 transition-all active:scale-95"
+                        >
+                          <Receipt className="w-3.5 h-3.5" />
+                          <span>Collect Installment</span>
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1 text-[11px] font-semibold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          <span>Fee Pending</span>
+                        </div>
+                      )
                     ) : (
                       <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
                         <CheckCircle2 className="w-3.5 h-3.5" />
