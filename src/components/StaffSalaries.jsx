@@ -39,9 +39,28 @@ export default function StaffSalaries({
     setLoadingIncentives(true);
     try {
       const data = await api.getIncentives();
-      setIncentivesData(data);
+      if (Array.isArray(data)) {
+        const totalDue = data.filter((i) => i.status === 'due').reduce((s, i) => s + Number(i.amount || 0), 0);
+        const totalPaid = data.filter((i) => i.status === 'paid').reduce((s, i) => s + Number(i.amount || 0), 0);
+        setIncentivesData({
+          incentives: data,
+          summary: { total_due: totalDue, total_paid: totalPaid, total_count: data.length },
+        });
+      } else if (data && Array.isArray(data.incentives)) {
+        setIncentivesData({
+          incentives: data.incentives,
+          summary: data.summary || {
+            total_due: 0,
+            total_paid: 0,
+            total_count: data.incentives.length,
+          },
+        });
+      } else {
+        setIncentivesData({ incentives: [], summary: { total_due: 0, total_paid: 0, total_count: 0 } });
+      }
     } catch (err) {
       console.error(err);
+      setIncentivesData({ incentives: [], summary: { total_due: 0, total_paid: 0, total_count: 0 } });
     } finally {
       setLoadingIncentives(false);
     }
@@ -119,9 +138,9 @@ export default function StaffSalaries({
             >
               <Gift className="w-4 h-4" />
               <span>Admission Incentives &amp; Commissions</span>
-              {incentivesData?.summary?.total_due > 0 && (
+              {Number(incentivesData?.summary?.total_due || 0) > 0 && (
                 <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px]">
-                  {currency}{incentivesData.summary.total_due.toLocaleString()} Due
+                  {currency}{Number(incentivesData?.summary?.total_due || 0).toLocaleString()} Due
                 </span>
               )}
             </button>
@@ -201,13 +220,13 @@ export default function StaffSalaries({
               <div className="flex justify-center py-8">
                 <div className="w-8 h-8 border-3 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
               </div>
-            ) : incentivesData?.incentives?.length === 0 ? (
+            ) : (!incentivesData?.incentives || incentivesData.incentives.length === 0) ? (
               <div className="text-center py-10 text-slate-500 text-xs">
                 No incentives recorded yet. When you enroll a student from "New Course Admission &amp; Bill", you can select the counselor and commission tier!
               </div>
             ) : (
               <div className="divide-y divide-slate-800/60">
-                {incentivesData.incentives.map((inc) => {
+                {(incentivesData?.incentives || []).map((inc) => {
                   const isPaid = inc.status === 'paid';
                   return (
                     <div
@@ -304,7 +323,7 @@ export default function StaffSalaries({
                     <div className="text-right">
                       <span className="text-[10px] text-slate-400 block uppercase font-bold">Monthly Base</span>
                       <span className="text-sm font-black text-slate-100">
-                        {currency}{Number(member.monthly_salary).toLocaleString()}
+                        {currency}{Number(member.monthly_salary || 0).toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -355,13 +374,13 @@ export default function StaffSalaries({
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Date: {sal.payment_date} • Mode: {sal.payment_mode.toUpperCase()} • {sal.account_name || 'Account'}
+                      Date: {sal.payment_date} • Mode: {String(sal.payment_mode || 'cash').toUpperCase()} • {sal.account_name || 'Account'}
                     </p>
                   </div>
 
                   <div className="text-right">
                     <span className="text-xs sm:text-sm font-extrabold text-rose-400 block">
-                      -{currency} {Number(sal.amount).toLocaleString()}
+                      -{currency} {Number(sal.amount || 0).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -404,7 +423,7 @@ export default function StaffSalaries({
                 </div>
                 <div className="flex justify-between pt-1 border-t border-slate-800">
                   <span className="text-slate-400">Payable Amount:</span>
-                  <span className="text-base font-extrabold text-emerald-400">{currency}{payingIncentive.amount}</span>
+                  <span className="text-base font-extrabold text-emerald-400">{currency}{Number(payingIncentive.amount || 0).toLocaleString()}</span>
                 </div>
               </div>
 
@@ -451,7 +470,7 @@ export default function StaffSalaries({
                 disabled={disbursing}
                 className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95"
               >
-                {disbursing ? 'Processing...' : `Confirm & Pay ${currency}${payingIncentive.amount} Incentive`}
+                {disbursing ? 'Processing...' : `Confirm & Pay ${currency}${Number(payingIncentive.amount || 0).toLocaleString()} Incentive`}
               </button>
             </form>
           </div>

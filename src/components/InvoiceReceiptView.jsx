@@ -55,7 +55,7 @@ export default function InvoiceReceiptView({ invoice, onClose, currency = '₹' 
       `${itemsSummary}\n` +
       `---------------------------\n` +
       paymentBreakdown +
-      `Payment Mode: ${String(invoice.payment_mode).toUpperCase()}\n` +
+      `Payment Mode: ${String(invoice.payment_mode || 'cash').toUpperCase()}\n` +
       `Thank you for your business!`;
 
     const phone = invoice.customer_phone ? invoice.customer_phone.replace(/[^0-9]/g, '') : '';

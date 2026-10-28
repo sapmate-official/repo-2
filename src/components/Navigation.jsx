@@ -63,16 +63,16 @@ export default function Navigation({
   const employeeData = profile?.employee || user?.employee;
 
   // Determine user display name
-  let displayName = 'Admin';
-  const email = profile?.email || user?.email || '';
+  let displayName = 'Kabir Khan';
+  const email = (isAdmin && (!profile?.email || profile.email === 'contact@alkaabusiness.com'))
+    ? 'Kabir.khan@shapenxt.com'
+    : (profile?.email || user?.email || '');
 
   if (isAdmin) {
-    if ((email && email.toLowerCase().includes('kabir')) || user?.username?.toLowerCase() === 'kabir') {
+    if ((email && email.toLowerCase().includes('kabir')) || user?.username?.toLowerCase() === 'kabir' || user?.username?.toLowerCase() === 'admin' || !user?.username) {
       displayName = 'Kabir Khan';
-    } else if (user?.username && user.username !== 'admin') {
-      displayName = user.username.charAt(0).toUpperCase() + user.username.slice(1);
     } else {
-      displayName = profile?.business_name ? `${profile.business_name}` : 'Admin';
+      displayName = user.username.charAt(0).toUpperCase() + user.username.slice(1);
     }
   } else {
     displayName = employeeData?.name || user?.username || 'Employee';

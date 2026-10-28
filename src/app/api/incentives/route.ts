@@ -17,19 +17,34 @@ export async function GET(req: NextRequest) {
       orderBy: { id: 'desc' },
     });
 
-    return NextResponse.json(
-      incentives.map((inc) => ({
-        ...inc,
-        amount: Number(inc.amount),
-        admission_amount: Number(inc.admissionAmount),
-        staff_name: inc.staffName,
-        student_name: inc.studentName,
-        course_name: inc.courseName,
-        incentive_rule: inc.incentiveRule,
-        payment_mode: inc.paymentMode,
-        paid_date: inc.paidDate,
-      }))
-    );
+    const mappedIncentives = incentives.map((inc) => ({
+      ...inc,
+      amount: Number(inc.amount),
+      admission_amount: Number(inc.admissionAmount),
+      staff_name: inc.staffName,
+      student_name: inc.studentName,
+      course_name: inc.courseName,
+      incentive_rule: inc.incentiveRule,
+      payment_mode: inc.paymentMode,
+      paid_date: inc.paidDate,
+    }));
+
+    const totalDue = mappedIncentives
+      .filter((i) => i.status === 'due')
+      .reduce((sum, i) => sum + i.amount, 0);
+
+    const totalPaid = mappedIncentives
+      .filter((i) => i.status === 'paid')
+      .reduce((sum, i) => sum + i.amount, 0);
+
+    return NextResponse.json({
+      incentives: mappedIncentives,
+      summary: {
+        total_due: totalDue,
+        total_paid: totalPaid,
+        total_count: mappedIncentives.length,
+      },
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

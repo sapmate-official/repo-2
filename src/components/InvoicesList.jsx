@@ -23,7 +23,10 @@ export default function InvoicesList({
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'due' | 'paid'
 
-  const dueInvoices = invoices.filter(inv => {
+  const safeInvoices = Array.isArray(invoices) ? invoices : [];
+
+  const dueInvoices = safeInvoices.filter((inv) => {
+    if (!inv) return false;
     const totalFee = Number(inv.net_amount || 0);
     const paidNow = inv.amount_paid !== undefined && inv.amount_paid !== null 
       ? Number(inv.amount_paid) 
@@ -34,7 +37,8 @@ export default function InvoicesList({
     return dueNow > 0 || inv.payment_mode === 'unpaid';
   });
 
-  const paidInvoices = invoices.filter(inv => {
+  const paidInvoices = safeInvoices.filter((inv) => {
+    if (!inv) return false;
     const totalFee = Number(inv.net_amount || 0);
     const paidNow = inv.amount_paid !== undefined && inv.amount_paid !== null 
       ? Number(inv.amount_paid) 
@@ -47,15 +51,16 @@ export default function InvoicesList({
 
   const baseList = filterMode === 'due' 
     ? dueInvoices 
-    : (filterMode === 'paid' ? paidInvoices : invoices);
+    : (filterMode === 'paid' ? paidInvoices : safeInvoices);
 
-  const filtered = baseList.filter(inv => {
-    const q = search.toLowerCase();
-    return (
-      inv.invoice_number.toLowerCase().includes(q) ||
-      inv.customer_name.toLowerCase().includes(q) ||
-      (inv.customer_phone && inv.customer_phone.includes(q))
-    );
+  const filtered = baseList.filter((inv) => {
+    if (!inv) return false;
+    const q = (search || '').toLowerCase().trim();
+    if (!q) return true;
+    const invNum = String(inv.invoice_number || '').toLowerCase();
+    const custName = String(inv.customer_name || '').toLowerCase();
+    const custPhone = String(inv.customer_phone || '');
+    return invNum.includes(q) || custName.includes(q) || custPhone.includes(q);
   });
 
   return (
@@ -184,7 +189,7 @@ export default function InvoicesList({
                 <div
                   key={inv.id}
                   className="py-3.5 flex items-center justify-between gap-3 hover:bg-slate-800/30 px-2 rounded-xl transition-colors cursor-pointer"
-                  onClick={() => onViewInvoice(inv.id)}
+                  onClick={() => onViewInvoice && onViewInvoice(inv.id)}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400 flex-shrink-0">
@@ -193,16 +198,16 @@ export default function InvoicesList({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs sm:text-sm font-bold text-slate-100">
-                          {inv.customer_name}
+                          {inv.customer_name || 'Customer'}
                         </span>
                         <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                          {inv.invoice_number}
+                          {inv.invoice_number || `INV-${inv.id}`}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                        {inv.created_at ? new Date(inv.created_at).toLocaleDateString() : 'Today'} • {inv.payment_mode?.toUpperCase()}
+                        {inv.created_at ? new Date(inv.created_at).toLocaleDateString() : 'Today'} • {String(inv.payment_mode || 'PAID').toUpperCase()}
                         {inv.counselor_name && ` • Counselor: ${inv.counselor_name}`}
-                        {inv.incentive_amount > 0 && ` (Incentive: ${currency}${inv.incentive_amount})`}
+                        {Number(inv.incentive_amount || 0) > 0 && ` (Incentive: ${currency}${inv.incentive_amount})`}
                       </p>
                     </div>
                   </div>
@@ -245,7 +250,7 @@ export default function InvoicesList({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onViewInvoice(inv.id);
+                        onViewInvoice && onViewInvoice(inv.id);
                       }}
                       className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
                       title="View & Print Bill"
